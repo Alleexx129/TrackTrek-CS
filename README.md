@@ -23,7 +23,7 @@ I will make this into a exe file soon with UI, but I will keep it open-source of
 - Enter youtube link or keywork
 - Choose between 5 first searches if you select with keywords
 
-# Dependencies (No installation required)
+## Dependencies (No installation required)
 - YoutubeExplode
 - TagLib
 - MediaToolkit
