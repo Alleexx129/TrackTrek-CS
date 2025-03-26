@@ -14,7 +14,7 @@
 - **User-Friendly Search**: Quickly find the music you want by entering keywords related to the song or artist.
 
 ### Install depencies
-[.Net Desktop Runtime 8](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.14-windows-x64-installer)
+[.Net Desktop Runtime 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.14-windows-x64-installer)
 
 
 I will make this into a exe file soon with UI, but I will keep it open-source of course as always
