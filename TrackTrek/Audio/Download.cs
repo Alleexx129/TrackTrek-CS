@@ -58,7 +58,7 @@ namespace TrackTrek.Audio
         }
         public static async Task<string> DownloadAudio(YoutubeClient youtube, YoutubeExplode.Videos.Video videoInfo, string query)
         {
-            Sys.debug($"Step 1 Download");
+            Sys.debug($"Step 1 download");
             item = new ListViewItem("Getting info...");
             item.SubItems.Add("Fetching...");
             Form1.downloadQueue.Items.Add(item);
