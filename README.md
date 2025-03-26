@@ -13,10 +13,6 @@
 - **Artwork Download**: Includes album artwork for a complete listening experience.
 - **User-Friendly Search**: Quickly find the music you want by entering keywords related to the song or artist.
 
-## Installation
-### Install python
-https://www.python.org/downloads/release/python-3130/
-
 ### Install depencies
 https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.14-windows-x64-installer
 This is the only dependency
