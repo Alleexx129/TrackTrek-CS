@@ -1,4 +1,4 @@
-# This is an alpha unstable version. Expect bugs and non-existent features that will be added in the near future.
+# This is an alpha unstable version. Expect bugs and non-existent features that will be added in the near future. [Latest preview](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v0.5.0-alpha)
 
 ![Alt text](https://raw.githubusercontent.com/Alleexx129/Nyanko/refs/heads/main/logo.png "TrackTrek")
 
