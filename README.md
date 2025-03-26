@@ -1,6 +1,6 @@
-![Alt text](https://raw.githubusercontent.com/Alleexx129/Nyanko/refs/heads/main/logo.png "TrackTrek")
+# This is an alpha unstable version. Expect bugs and non-existent features that will be added in the near future.
 
-# THIS IS A ALPHA UNSTABLE VERSION, EXPECT BUGS AND NON-EXISTANT FEATURES THAT WILL BE ADDED IN THE NEAR FUTURE
+![Alt text](https://raw.githubusercontent.com/Alleexx129/Nyanko/refs/heads/main/logo.png "TrackTrek")
 
 # TrackTrek
 
