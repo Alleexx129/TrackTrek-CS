@@ -29,7 +29,7 @@ namespace TrackTrek.Audio
             file.Save();
         }
     
-        private static async Task<byte[]> DownloadThumbnailAsBytes(string url)
+        public static async Task<byte[]> DownloadThumbnailAsBytes(string url)
             {
                 using (HttpClient client = new HttpClient())
                 {
