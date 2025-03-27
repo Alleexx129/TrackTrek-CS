@@ -69,7 +69,7 @@ namespace TrackTrek.Audio
                 .GetWithHighestBitrate();
 
             Stream stream = await youtube.Videos.Streams.GetAsync(streamInfo);
-            string name = videoInfo.Title + " - " + FilterArtistName.filter(videoInfo.Author);
+            string name = videoInfo.Title + " - " + Filter.FilterArtistName(videoInfo.Author);
 
             Sys.debug($"Step 2 Download");
 

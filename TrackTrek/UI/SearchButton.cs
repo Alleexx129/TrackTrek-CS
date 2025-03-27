@@ -17,6 +17,7 @@ using TrackTrek.Miscs;
 using YoutubeExplode.Search;
 using AngleSharp.Media;
 using AngleSharp.Common;
+using System.ComponentModel;
 
 namespace TrackTrek.UI
 {
@@ -56,21 +57,23 @@ namespace TrackTrek.UI
                         {
                             case VideoSearchResult video:
                                 {
+                                    if (Form1.resultsList.SmallImageList == null)
+                                    {
+                                        Form1.resultsList.SmallImageList = new ImageList();
+                                        Form1.resultsList.SmallImageList.ImageSize = new Size(70, 70);
+                                    }
+
+
                                     string imageUrl = video.Thumbnails[video.Thumbnails.Count - 1].Url;
                                     
-                                    ListViewItem item = new ListViewItem();
+                                    ListViewItem item = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
                                     byte[] imageByte = await CustomMetaData.DownloadThumbnailAsBytes(imageUrl);
-                                    Sys.debug(imageByte.Length.ToString());
                                     byte[] resizedImage = ImageUtils.ResizeImage(imageByte);
-                                    Sys.debug(resizedImage.Length.ToString());
                                     MemoryStream imageStream = new MemoryStream(resizedImage);
-                                    Sys.debug(imageStream.Length.ToString());
+                                    Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
 
-                                    imageStream.CopyTo(imageStream);
-                                    Form1.resultsList.SmallImageList.Images.Add("Image", Image.FromStream(imageStream));
-                                    Sys.debug("After");
                                     item.SubItems.Add(video.Title);
-                                    item.SubItems.Add(FilterArtistName.filter(video.Author));
+                                    item.SubItems.Add(Filter.FilterArtistName(video.Author));
                                     item.SubItems.Add(video.Duration.ToString());
                                     Form1.resultsList.Items.Add(item);
 

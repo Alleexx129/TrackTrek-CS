@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace TrackTrek.Miscs
 {
-    internal class FilterArtistName
+    internal class Filter
     {
-        public static string filter(YoutubeExplode.Common.Author artistName)
+        public static string FilterArtistName(YoutubeExplode.Common.Author artistName)
         {
 
             return Regex.Replace(artistName.ToString(), @"\([^\)]*\)|\s*- topic$|\s*- Topic$|\s* official$|\s* Official$", "");

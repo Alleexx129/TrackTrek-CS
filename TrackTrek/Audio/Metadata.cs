@@ -23,7 +23,7 @@ namespace TrackTrek.Audio
             };
 
             file.Tag.Pictures = new TagLib.IPicture[] { picture };
-            file.Tag.Performers = new string[] { FilterArtistName.filter(videoInfo.Author) };
+            file.Tag.Performers = new string[] { Filter.FilterArtistName(videoInfo.Author) };
             file.Tag.Title = videoInfo.Title;
 
             file.Save();
