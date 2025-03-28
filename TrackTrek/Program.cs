@@ -69,20 +69,34 @@ namespace TrackTrek
             //settingsButton.Click += SettingsButton_Click;
             resultsList.DoubleClick += (sender, e) => Task.Run(async () =>
             {
-                ListViewItem item = resultsList.SelectedItems[0];
-                YoutubeClient youtube = new YoutubeClient();
-                string title = item.SubItems[1].Text;
-                string artist = item.SubItems[2].Text;
-                string album = item.SubItems[3].Text;
+                ListViewItem resultItem = resultsList.SelectedItems[0];
+                ListViewItem newItem = new ListViewItem("Fetching...");
+
+                string title = resultItem.SubItems[1].Text;
+                string artist = resultItem.SubItems[2].Text;
+                string album = resultItem.SubItems[3].Text;
+
+                newItem.SubItems[1].Text = "Loading...";
+                downloadQueue.Items.Add(newItem);
+
                 YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title + " - " + artist);
+
                 Sys.debug("Starting download...");
-                string output = await Download.DownloadAudio(youtube, artist, title, videoInfo.Url);
+
+                string output = await Download.EnqueueDownload(artist, title, videoInfo.Url, newItem);
+
                 Sys.debug("Audio downloaded!: " + output);
+
                 Thumbnail thumbnail = videoInfo.Thumbnails[videoInfo.Thumbnails.Count - 1];
+
                 Sys.debug("Adding metadata: " + thumbnail.Url);
+
                 string albumImageUrl = await ImageUtils.GetAlbumImageUrl(album, artist);
+
                 Sys.debug("Album Url: " + albumImageUrl);
+
                 await CustomMetaData.Add(output, albumImageUrl, artist, title, album);
+
                 Form1.downloadProgress.Value = 100;
             });
         }

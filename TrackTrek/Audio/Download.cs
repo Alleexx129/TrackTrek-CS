@@ -21,6 +21,16 @@ namespace TrackTrek.Audio
 
     internal class Download
     {
+        private static List<object> queue = new List<object>
+        {
+            "artist",
+            "title",
+            "query",
+            new ListViewItem()
+
+        };
+        private static Boolean downloading = false;
+
         private static async Task<string> ConvertAndDelete(string name, string path, ListViewItem item)
         {
             String outputPath = Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"), $"{name}.mp3");
@@ -39,13 +49,10 @@ namespace TrackTrek.Audio
 
             using (Process process = Process.Start(processStartInfo))
             {
-                Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
-                Task<string> errorTask = process.StandardError.ReadToEndAsync();
-                await Task.WhenAll(outputTask, errorTask);
+                string output = await process.StandardOutput.ReadToEndAsync();
+                string error = await process.StandardError.ReadToEndAsync();
 
-                string output = await outputTask;
-                string error = await errorTask;
-                //process.WaitForExit();
+                process.WaitForExit();
 
 
                 if (process.ExitCode != 0)
@@ -65,9 +72,9 @@ namespace TrackTrek.Audio
             }
         }
 
-        public static async Task<string> DownloadAudio(YoutubeClient youtube, string artist, string title, string query)
+        private protected static async Task<string> DownloadAudio(string artist, string title, string query, ListViewItem item)
         {
-            ListViewItem item;
+            YoutubeClient youtube = new YoutubeClient();
 
             Sys.debug($"Step 1 download");
             item = new ListViewItem("Getting info...");
@@ -103,6 +110,48 @@ namespace TrackTrek.Audio
 
             item.SubItems[1].Text = "Converting...";
             return await ConvertAndDelete(name, path, item);
+        }
+
+        public async static Task<string> EnqueueDownload(string artist, string title, string query, ListViewItem item)
+        {
+            object[] list = new object[] { 
+                artist, title, query, item
+            };
+
+            item.SubItems[0].Text = "Getting info...";
+            item.SubItems[1].Text = "Enqueued!";
+            Form1.downloadQueue.Items.Add(item);
+
+            queue.AddRange(list);
+
+            if (!downloading && queue[queue.Count - 1] == list)
+            {
+                downloading = true;
+                queue.RemoveAt(0);
+
+                await DownloadAudio(artist, title, query, item);
+                downloading = false;
+            } else
+            {
+                while (!downloading)
+                {
+                    if (queue[queue.Count - 1] == list)
+                    {
+                        await Task.Delay(500);
+                    } else
+                    {
+                        await Task.Delay(1000);
+                    }
+                }
+            }
+
+            downloading = true;
+            queue.RemoveAt(0);
+            string outp = await DownloadAudio(artist, title, query, item);
+            downloading = false;
+
+
+            return outp;
         }
     }
 }

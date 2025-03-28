@@ -34,11 +34,16 @@ namespace TrackTrek.UI
 
             if (Searching.CheckIfLink(query))
             {
+                ListViewItem newItem = new ListViewItem("Fetching...");
+
+                newItem.SubItems[1].Text = "Loading...";
+                Form1.downloadQueue.Items.Add(newItem);
+
                 YoutubeExplode.Videos.Video videoInfo = await youtube.Videos.GetAsync(query);
 
                 Sys.debug($"Starting download...");
 
-                string output = await Download.DownloadAudio(youtube, videoInfo.Author.ToString(), videoInfo.Title.ToString(), query);
+                string output = await Download.EnqueueDownload(videoInfo.Author.ToString(), videoInfo.Title.ToString(), query, newItem);
 
                 Sys.debug($"Audio downloaded!: {output}");
 
@@ -63,7 +68,6 @@ namespace TrackTrek.UI
                 foreach (JsonObject item in responseJson)
                 {
                     index++;
-                    Sys.debug(item.GetType().ToString());
                     if (Form1.resultsList.SmallImageList == null)
                     {
                         Form1.resultsList.SmallImageList = new ImageList();
