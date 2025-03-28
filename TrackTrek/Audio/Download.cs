@@ -43,20 +43,23 @@ namespace TrackTrek.Audio
                 Task<string> errorTask = process.StandardError.ReadToEndAsync();
                 await Task.WhenAll(outputTask, errorTask);
 
-                string output = outputTask.Result;
-                string error = errorTask.Result;
-                process.WaitForExit();
+                string output = await outputTask;
+                string error = await errorTask;
+                //process.WaitForExit();
 
-                Console.WriteLine(output);
-                Console.WriteLine(error);
 
                 if (process.ExitCode != 0)
                 {
+                    Sys.debug($"FFMPEG ERROR: {error}");
+                    await ConvertAndDelete(name, path, item);
                     throw new Exception($"FFmpeg conversion failed: {error}");
                 }
 
                 Form1.downloadProgress.Value = 80;
-                File.Delete(path);
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
                 item.SubItems[1].Text = "Completed!";
                 return outputPath;
             }
