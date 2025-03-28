@@ -16,13 +16,15 @@ namespace TrackTrek.Settings
         protected override void OnClick(EventArgs e)
         {
             base.OnClick(e);
+            string mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TrackTrek");
+            string settingsPath = Path.Combine(mainPath, "Settings.json");
 
-            string jsonString = File.ReadAllText("Settings.json");
+            string jsonString = File.ReadAllText(settingsPath);
             JsonNode json = JsonNode.Parse(jsonString);
 
             json["debug"] = !Program.debug;
 
-            File.WriteAllText("Settings.json", json.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+            File.WriteAllText(settingsPath, json.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 
             Program.debug = !Program.debug;
             this.Text = $"Debug: {Program.debug.ToString()}";

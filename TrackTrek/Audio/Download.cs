@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Xml.Linq;
 using AngleSharp.Media;
 using MediaToolkit;
@@ -18,15 +19,16 @@ using YoutubeExplode.Videos.Streams;
 namespace TrackTrek.Audio
 {
 
-    internal class Download {
-        private static ListViewItem item;
-        private static async Task<string> Convert_and_Delete(string name, string path)
+    internal class Download
+    {
+        private static async Task<string> ConvertAndDelete(string name, string path, ListViewItem item)
         {
-
             String outputPath = Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"), $"{name}.mp3");
+            item.SubItems[0].Text = outputPath;
 
             Sys.debug("Output path: " + outputPath);
-            ProcessStartInfo processStartInfo = new ProcessStartInfo { 
+            ProcessStartInfo processStartInfo = new ProcessStartInfo
+            {
                 FileName = "ffmpeg",
                 Arguments = $"-i \"{path}\" -c:a libmp3lame -b:a 192k -ar 44100 -ac 2 -threads 4 -y \"{outputPath}\"",
                 RedirectStandardOutput = true,
@@ -37,8 +39,12 @@ namespace TrackTrek.Audio
 
             using (Process process = Process.Start(processStartInfo))
             {
-                string output = process.StandardOutput.ReadToEnd();
-                string error = process.StandardError.ReadToEnd();
+                Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+                Task<string> errorTask = process.StandardError.ReadToEndAsync();
+                await Task.WhenAll(outputTask, errorTask);
+
+                string output = outputTask.Result;
+                string error = errorTask.Result;
                 process.WaitForExit();
 
                 Console.WriteLine(output);
@@ -48,16 +54,18 @@ namespace TrackTrek.Audio
                 {
                     throw new Exception($"FFmpeg conversion failed: {error}");
                 }
-                Form1.downloadProgress.Value = 80;
 
+                Form1.downloadProgress.Value = 80;
                 File.Delete(path);
                 item.SubItems[1].Text = "Completed!";
                 return outputPath;
             }
-
         }
-        public static async Task<string> DownloadAudio(YoutubeClient youtube, YoutubeExplode.Videos.Video videoInfo, string query)
+
+        public static async Task<string> DownloadAudio(YoutubeClient youtube, string artist, string title, string query)
         {
+            ListViewItem item;
+
             Sys.debug($"Step 1 download");
             item = new ListViewItem("Getting info...");
             item.SubItems.Add("Fetching...");
@@ -69,7 +77,7 @@ namespace TrackTrek.Audio
                 .GetWithHighestBitrate();
 
             Stream stream = await youtube.Videos.Streams.GetAsync(streamInfo);
-            string name = videoInfo.Title + " - " + Filter.FilterArtistName(videoInfo.Author);
+            string name = title + " - " + Filter.FilterArtistName(artist);
 
             Sys.debug($"Step 2 Download");
 
@@ -88,10 +96,10 @@ namespace TrackTrek.Audio
 
             Form1.downloadProgress.Value = 40;
 
-            Sys.debug($"Starting \"Convert_and_Delete\"");
+            Sys.debug($"Starting \"ConvertAndDelete\"");
 
             item.SubItems[1].Text = "Converting...";
-            return await Convert_and_Delete(name, path);
+            return await ConvertAndDelete(name, path, item);
         }
     }
 }

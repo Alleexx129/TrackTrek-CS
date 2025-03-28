@@ -1,7 +1,11 @@
-using System.Drawing;
+﻿using System.Drawing;
 using System.Text.Json.Nodes;
 using System.Windows.Forms;
+using TrackTrek.Audio;
+using TrackTrek.Miscs;
 using TrackTrek.UI;
+using YoutubeExplode.Common;
+using YoutubeExplode;
 
 namespace TrackTrek
 {
@@ -9,37 +13,46 @@ namespace TrackTrek
     {
 
         public static Boolean debug = false;
+        public static string maxResults = "10";
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
         static void Main()
         {
-            if (!File.Exists("Settings.json"))
+            Sys.initialize();
+            string path1 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TrackTrek");
+            string path = Path.Combine(path1, "Settings.json");
+            JsonNode jsonNode = JsonNode.Parse(File.ReadAllText(path));
+            try
             {
-                File.WriteAllText("Settings.json", "{\"debug\": true}");
+                Program.debug = jsonNode["debug"].GetValue<bool>();
+                Program.maxResults = jsonNode["maxResults"].GetValue<string>();
             }
-            
-            string jsonString = File.ReadAllText("Settings.json");
-            JsonNode json = JsonNode.Parse(jsonString);
+            catch
+            {
+                File.WriteAllText(path, "{\"debug\": true, \"maxResults\": \"10\"}");
+                Program.debug = jsonNode["debug"].GetValue<bool>();
+                Program.maxResults = jsonNode["maxResults"].GetValue<string>();
+            }
 
-            debug = json["debug"].GetValue<bool>() || false;
             try
             {
                 // To customize application configuration such as set high DPI settings or default font,
                 // see https://aka.ms/applicationconfiguration.
                 ApplicationConfiguration.Initialize();
                 Application.Run(new Form1());
-                }
-                catch (Exception e)
-                {
-                    File.WriteAllText(DateTime.Today.ToString("yyyy-MM-dd") + "_error.txt", e.ToString());
-                    MessageBox.Show("An unexpected error occurred: " + e.ToString());
-                };
-            
+            }
+            catch (Exception e)
+            {
+                File.WriteAllText(DateTime.Today.ToString("yyyy-MM-dd") + "_error.txt", e.ToString());
+                MessageBox.Show("An unexpected error occurred: " + e.ToString());
+            }
+            ;
 
 
-        
+
+
 
         }
         public static void add_controls(Control.ControlCollection Controls, SearchBar searchBox, SearchButton searchButton, Button settingsButton, ListView resultsList, ListView downloadQueue, ProgressBar downloadProgress)
@@ -53,6 +66,25 @@ namespace TrackTrek
 
             //searchButton.Click += SearchButton_Click;
             //settingsButton.Click += SettingsButton_Click;
+            resultsList.DoubleClick += (sender, e) => Task.Run(async () =>
+            {
+                ListViewItem item = resultsList.SelectedItems[0];
+                YoutubeClient youtube = new YoutubeClient();
+                string title = item.SubItems[1].Text;
+                string artist = item.SubItems[2].Text;
+                string album = item.SubItems[3].Text;
+                YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title + " - " + artist);
+                Sys.debug("Starting download...");
+                string output = await Download.DownloadAudio(youtube, artist, title, videoInfo.Url);
+                Sys.debug("Audio downloaded!: " + output);
+                Thumbnail thumbnail = videoInfo.Thumbnails[videoInfo.Thumbnails.Count - 1];
+                Sys.debug("Adding metadata: " + thumbnail.Url);
+                string albumImageUrl = await ImageUtils.GetAlbumImageUrl(album, artist);
+                Sys.debug("Album Url: " + albumImageUrl);
+                await CustomMetaData.Add(output, albumImageUrl, artist, title, album);
+                Form1.downloadProgress.Value = 100;
+            });
         }
     }
+        
 }

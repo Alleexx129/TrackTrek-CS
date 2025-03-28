@@ -7,8 +7,6 @@ using System.Threading.Tasks;
 using YoutubeExplode;
 using YoutubeExplode.Videos;
 using YoutubeExplode.Videos.Streams;
-using MediaToolkit;
-using MediaToolkit.Model;
 using TrackTrek.Audio;
 using YoutubeExplode.Common;
 using System.IO;
@@ -18,6 +16,10 @@ using YoutubeExplode.Search;
 using AngleSharp.Media;
 using AngleSharp.Common;
 using System.ComponentModel;
+using System.Reflection.Metadata;
+using System.Text.Json.Serialization;
+using System.Text.Json.Nodes;
+using static MediaToolkit.Model.Metadata;
 
 namespace TrackTrek.UI
 {
@@ -26,70 +28,69 @@ namespace TrackTrek.UI
         protected override async void OnClick(EventArgs e)
         {
             Form1.downloadProgress.Value = 0;
-            try
+            var youtube = new YoutubeClient();
+
+            string query = this.Parent.Controls.OfType<SearchBar>().FirstOrDefault()?.Text;
+
+            if (Searching.CheckIfLink(query))
             {
-                var youtube = new YoutubeClient();
+                YoutubeExplode.Videos.Video videoInfo = await youtube.Videos.GetAsync(query);
 
-                string query = this.Parent.Controls.OfType<SearchBar>().FirstOrDefault()?.Text;
+                Sys.debug($"Starting download...");
 
-                if (Searching.CheckIfLink(query))
+                string output = await Download.DownloadAudio(youtube, videoInfo.Author.ToString(), videoInfo.Title.ToString(), query);
+
+                Sys.debug($"Audio downloaded!: {output}");
+
+                var thumbnail = videoInfo.Thumbnails[videoInfo.Thumbnails.Count - 1];
+
+                Sys.debug($"Adding metadata: {thumbnail.Url} {videoInfo}");
+
+                await CustomMetaData.Add(output, thumbnail.Url, videoInfo.Author.ToString(), videoInfo.Title.ToString());
+
+                Form1.downloadProgress.Value = 100;
+            }
+            else
+            {
+                Form1.resultsList.Items.Clear();
+                HttpClient client = new HttpClient();
+
+                HttpResponseMessage httpResponse = await client.GetAsync($"https://itunes.apple.com/search?term={query}&entity=song");
+                string response = await httpResponse.Content.ReadAsStringAsync();
+                dynamic responseJson = JsonNode.Parse(response)["results"];
+                int index = 0;
+
+                foreach (JsonObject item in responseJson)
                 {
-                    Video videoInfo = await youtube.Videos.GetAsync(query);
-
-                    Sys.debug($"Starting download...");
-
-                    string output = await Download.DownloadAudio(youtube, videoInfo, query);
-
-                    Sys.debug($"Audio downloaded!: {output}");
-
-                    var thumbnail = videoInfo.Thumbnails[videoInfo.Thumbnails.Count - 1];
-
-                    Sys.debug($"Adding metadata: {thumbnail.Url} {videoInfo}");
-
-                    await CustomMetaData.Add(output, thumbnail.Url, videoInfo);
-
-                    Form1.downloadProgress.Value = 100;
-                } else
-                {
-                    await foreach (ISearchResult result in youtube.Search.GetResultsAsync(query))
+                    index++;
+                    Sys.debug(item.GetType().ToString());
+                    if (Form1.resultsList.SmallImageList == null)
                     {
-                       switch (result)
-                        {
-                            case VideoSearchResult video:
-                                {
-                                    if (Form1.resultsList.SmallImageList == null)
-                                    {
-                                        Form1.resultsList.SmallImageList = new ImageList();
-                                        Form1.resultsList.SmallImageList.ImageSize = new Size(70, 70);
-                                    }
+                        Form1.resultsList.SmallImageList = new ImageList();
+                        Form1.resultsList.SmallImageList.ImageSize = new Size(70, 70);
+                    }
 
+                    var imageUrl = item["artworkUrl100"].ToString();
 
-                                    string imageUrl = video.Thumbnails[video.Thumbnails.Count - 1].Url;
-                                    
-                                    ListViewItem item = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
-                                    byte[] imageByte = await CustomMetaData.DownloadThumbnailAsBytes(imageUrl);
-                                    byte[] resizedImage = ImageUtils.ResizeImage(imageByte);
-                                    MemoryStream imageStream = new MemoryStream(resizedImage);
-                                    Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
+                    ListViewItem listItem = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
+                    byte[] imageByte = await CustomMetaData.DownloadThumbnailAsBytes(imageUrl);
+                    byte[] resizedImage = ImageUtils.ResizeImage(imageByte);
+                    MemoryStream imageStream = new MemoryStream(resizedImage);
+                    Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
 
-                                    item.SubItems.Add(video.Title);
-                                    item.SubItems.Add(Filter.FilterArtistName(video.Author));
-                                    item.SubItems.Add(video.Duration.ToString());
-                                    Form1.resultsList.Items.Add(item);
+                    listItem.SubItems.Add(item["trackName"].ToString());
+                    listItem.SubItems.Add(item["artistName"].ToString());
+                    listItem.SubItems.Add(item["collectionName"].ToString());
 
-                                    break;
-                                }
-                            default:
-                                {
-                                    break;
-                                }
-                        }
+                    // Here you can see I've removed duration it was NOT because I could do it, it did made the whole thing lag since I needed to request youtube for duration (ITunes does not support this)
+
+                    Form1.resultsList.Items.Add(listItem);
+                    if (index >= Int32.Parse(Program.maxResults))
+                    {
+                        break;
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Sys.debug(ex.Message);
+
             }
             base.OnClick(e);
         }

@@ -1,4 +1,6 @@
-﻿using HtmlAgilityPack;
+﻿using System.Net.Http;
+using System.Threading.Tasks;
+using HtmlAgilityPack;
 using TrackTrek.Miscs;
 using YoutubeExplode.Videos;
 
@@ -6,7 +8,7 @@ namespace TrackTrek.Audio
 {
     internal class CustomMetaData
     {
-       public static async Task Add(string path, string imageUrl, Video videoInfo)
+       public static async Task Add(string path, string imageUrl, string artist, string title, string? albumName = "")
         {
             //string lyricsUrl;
             TagLib.File file = TagLib.File.Create(path);
@@ -23,8 +25,9 @@ namespace TrackTrek.Audio
             };
 
             file.Tag.Pictures = new TagLib.IPicture[] { picture };
-            file.Tag.Performers = new string[] { Filter.FilterArtistName(videoInfo.Author) };
-            file.Tag.Title = videoInfo.Title;
+            file.Tag.Performers = new string[] { Filter.FilterArtistName(artist) };
+            file.Tag.Title = title;
+            file.Tag.Album = albumName;
 
             file.Save();
         }

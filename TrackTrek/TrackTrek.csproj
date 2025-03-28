@@ -20,6 +20,7 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+    <None Include="TrackTrek.csproj" />
   </ItemGroup>
 
   <ItemGroup>
