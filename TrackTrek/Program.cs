@@ -69,15 +69,16 @@ namespace TrackTrek
             //settingsButton.Click += SettingsButton_Click;
             resultsList.DoubleClick += (sender, e) => Task.Run(async () =>
             {
+
                 ListViewItem resultItem = resultsList.SelectedItems[0];
-                ListViewItem newItem = new ListViewItem("Fetching...");
+                ListViewItem newItem = new ListViewItem("Loading...");
 
                 string title = resultItem.SubItems[1].Text;
                 string artist = resultItem.SubItems[2].Text;
                 string album = resultItem.SubItems[3].Text;
 
-                newItem.SubItems[1].Text = "Loading...";
-                downloadQueue.Items.Add(newItem);
+                newItem.SubItems.Add("Loading...");
+                Form1.downloadQueue.Items.Add(newItem);
 
                 YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title + " - " + artist);
 

@@ -36,7 +36,7 @@ namespace TrackTrek.UI
             {
                 ListViewItem newItem = new ListViewItem("Fetching...");
 
-                newItem.SubItems[1].Text = "Loading...";
+                newItem.SubItems.Add("Loading...");
                 Form1.downloadQueue.Items.Add(newItem);
 
                 YoutubeExplode.Videos.Video videoInfo = await youtube.Videos.GetAsync(query);

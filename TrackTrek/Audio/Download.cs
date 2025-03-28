@@ -77,9 +77,8 @@ namespace TrackTrek.Audio
             YoutubeClient youtube = new YoutubeClient();
 
             Sys.debug($"Step 1 download");
-            item = new ListViewItem("Getting info...");
-            item.SubItems.Add("Fetching...");
-            Form1.downloadQueue.Items.Add(item);
+            item.SubItems[0].Text = "Getting info...";
+            item.SubItems[1].Text = "Fetching...";
 
             StreamManifest streamManifest = await youtube.Videos.Streams.GetManifestAsync(query);
             IStreamInfo streamInfo = streamManifest
@@ -118,9 +117,8 @@ namespace TrackTrek.Audio
                 artist, title, query, item
             };
 
-            item.SubItems[0].Text = "Getting info...";
+            item.SubItems[0].Text = "Loading...";
             item.SubItems[1].Text = "Enqueued!";
-            Form1.downloadQueue.Items.Add(item);
 
             queue.AddRange(list);
 
@@ -133,7 +131,7 @@ namespace TrackTrek.Audio
                 downloading = false;
             } else
             {
-                while (!downloading)
+                while (downloading && queue[queue.Count - 1] != list)
                 {
                     if (queue[queue.Count - 1] == list)
                     {
