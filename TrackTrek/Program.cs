@@ -78,10 +78,11 @@ namespace TrackTrek
                 string album = resultItem.SubItems[3].Text;
 
                 newItem.SubItems.Add("Loading...");
-                lock (newItem.SubItems)
+                lock (Form1.downloadQueue.Items)
                 {
                     Form1.downloadQueue.Items.Add(newItem);
                 }
+                
 
                 YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title + " - " + artist);
 
@@ -91,13 +92,9 @@ namespace TrackTrek
 
                 Sys.debug("Audio downloaded!: " + output);
 
-                Thumbnail thumbnail = videoInfo.Thumbnails[videoInfo.Thumbnails.Count - 1];
-
-                Sys.debug("Adding metadata: " + thumbnail.Url);
-
                 string albumImageUrl = await ImageUtils.GetAlbumImageUrl(album, artist);
 
-                Sys.debug("Album Url: " + albumImageUrl);
+                Sys.debug("Adding metadata: " + albumImageUrl);
 
                 await CustomMetaData.Add(output, albumImageUrl, artist, title, album);
 
