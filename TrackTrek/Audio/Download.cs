@@ -113,39 +113,39 @@ namespace TrackTrek.Audio
 
         public async static Task<string> EnqueueDownload(string artist, string title, string query, ListViewItem item)
         {
-            object[] list = new object[] { 
-                artist, title, query, item
+            object[] list = new object[] {
+                artist, title, query, item,
             };
 
             item.SubItems[0].Text = "Loading...";
             item.SubItems[1].Text = "Enqueued!";
 
-            queue.AddRange(list);
-
-            if (!downloading && queue[queue.Count - 1] == list)
+            lock (queue)
             {
-                downloading = true;
-                queue.RemoveAt(0);
+                queue.Add(list);
+            }
 
-                await DownloadAudio(artist, title, query, item);
-                downloading = false;
-            } else
+            if (downloading && queue[0] != list)
             {
-                while (downloading && queue[queue.Count - 1] != list)
+                while (downloading && queue[0] != list)
                 {
-                    if (queue[queue.Count - 1] == list)
-                    {
-                        await Task.Delay(500);
-                    } else
-                    {
-                        await Task.Delay(1000);
-                    }
+                    await Task.Delay(500);
+                } 
+            }
+            if (downloading) {
+                while (downloading)
+                {
+                    await Task.Delay(500);
                 }
             }
 
             downloading = true;
-            queue.RemoveAt(0);
             string outp = await DownloadAudio(artist, title, query, item);
+            lock (queue)
+            { 
+                queue.RemoveAt(0); 
+            }
+                
             downloading = false;
 
 

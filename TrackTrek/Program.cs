@@ -78,7 +78,10 @@ namespace TrackTrek
                 string album = resultItem.SubItems[3].Text;
 
                 newItem.SubItems.Add("Loading...");
-                Form1.downloadQueue.Items.Add(newItem);
+                lock (newItem.SubItems)
+                {
+                    Form1.downloadQueue.Items.Add(newItem);
+                }
 
                 YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title + " - " + artist);
 
