@@ -4,14 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using AngleSharp.Text;
 using YoutubeExplode.Videos;
 
 namespace TrackTrek.Miscs
 {
     internal class Filter
     {
-        private static List<string> blacklistedVideoKeywords = new List<string> { "video", "Video", "live", "Live", "(Live)", "(Deluxe" }; // The program will ignore any video with these (Some live videos don't have the exact same sound as studio quality)
-        private static List<string> deletedVideoKeywords = new List<string> { "HD", "lyrics", "Lyrics", "Official", "official", "(clean version)", "(Live)"}; // The program will acccept videos with these keywords, but will delete these keywords in the title
+        private static List<string> blacklistedVideoKeywords = new List<string> { "Official HD Video", "Official Video", "】", "(HD", "(Live", "(Deluxe" }; // The program will ignore any video with these (Some live videos don't have the exact same sound as studio quality)
+        private static List<string> deletedVideoKeywords = new List<string> { "HD", "lyrics", "Lyrics", "Official", "official", "(Clean Version)", "(Live)", "(Official Audio)" }; // The program will acccept videos with these keywords, but will delete these keywords in the title
 
         public static string FilterArtistName(string artistName)
         {
@@ -27,7 +28,7 @@ namespace TrackTrek.Miscs
 
         public static string FilterTitle(string title)
         {
-            return deletedVideoKeywords.Aggregate(title, (current, word) => current.Replace(word, ""));
+            return deletedVideoKeywords.Aggregate(title, (current, word) => current.Replace(word, "").Replace("/", "-"));
         }
 
         public static string ToGeniusLink(string title, string artist)
@@ -36,6 +37,20 @@ namespace TrackTrek.Miscs
             string finalArtist = Regex.Replace(artist, @"[^a-zA-Z0-9 ]", "").Replace(" ", "-");
 
             return $"https://genius.com/{finalArtist}-{finalTitle}-lyrics";
+        }
+
+        public static string[] ToTitleAndArtist(string title, string artist)
+        {
+            string newTitle = FilterTitle(title);
+            string newArtist = FilterArtistName(artist);
+
+            if (newTitle.Contains(" - "))
+            {
+                newArtist = newTitle.Substring(0, newTitle.IndexOf(" - ")).Replace(" - ","");
+                newTitle = newTitle.Replace(newArtist, "").Replace(" - ", "");
+            }
+
+            return new string[] {newTitle, newArtist };
         }
     }
 }

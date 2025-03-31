@@ -88,7 +88,7 @@ namespace TrackTrek
 
                 Sys.debug("Starting download...");
 
-                string output = await Download.EnqueueDownload(artist, title, videoInfo.Url, newItem);
+                string output = await Download.EnqueueDownload(artist.Replace("/", "-"), title.Replace("/", "-"), videoInfo.Url, newItem);
 
                 Sys.debug("Audio downloaded!: " + output);
 
