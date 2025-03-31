@@ -36,7 +36,7 @@ namespace TrackTrek.Miscs
         }
         private static readonly HttpClient client = new HttpClient();
 
-        public static async Task<string> GetAlbumImageFromSongPage(string songAlbumUrl)
+        private protected static async Task<string> GetAlbumImageFromSongPage(string songAlbumUrl)
         {
             var html = await client.GetStringAsync(songAlbumUrl);
             var doc = new HtmlAgilityPack.HtmlDocument();

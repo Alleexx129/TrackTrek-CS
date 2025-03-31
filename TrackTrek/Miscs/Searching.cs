@@ -60,17 +60,37 @@ namespace TrackTrek.Miscs
 
             foreach (JsonObject item in responseJson)
             {
+                if (Filter.BlacklistedVideo(item["trackName"].ToString()))
+                {
+                    continue;
+                }
 
                 if (Regex.IsMatch(item["trackName"].ToString(), Regex.Escape(newVideoInfo.Title.ToLower())) && Regex.IsMatch(item["artistName"].ToString(), Regex.Escape(newVideoInfo.Artist.ToLower())))
                 {
                     newVideoInfo.Album = item["collectionName"].ToString();
                     newVideoInfo.Title = item["trackName"].ToString();
                     newVideoInfo.Artist = item["artistName"].ToString();
+                    newVideoInfo.AlbumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist);
+                    break;
                 }
             }
 
-                return newVideoInfo;
-        } 
+            return newVideoInfo;
+        }
+        public static async Task<string[]> GetPlaylistVideos(string playlistUrl)
+        {
+            var youtube = new YoutubeClient();
+            var videos = await youtube.Playlists.GetVideosAsync(playlistUrl);
+
+            await foreach (var video in youtube.Playlists.GetVideosAsync(playlistUrl))
+            {
+                var title = video.Title;
+                var author = video.Author;
+            }
+
+            return new string[] { };
+        }
     }   
+    
     
 }
