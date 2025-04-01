@@ -15,6 +15,7 @@ using TrackTrek.Miscs;
 using TrackTrek.UI;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
+using static TrackTrek.Miscs.Searching;
 
 namespace TrackTrek.Audio
 {
@@ -70,6 +71,15 @@ namespace TrackTrek.Audio
                 item.SubItems[1].Text = "Completed!";
                 return outputPath;
             }
+        }
+
+        private protected static async Task<string> DownloadPlaylist(VideoInfo[] playlistInfo)
+        {
+            foreach(VideoInfo video in playlistInfo)
+            {
+                // After class ;)
+            }
+            return "";
         }
 
         private protected static async Task<string> DownloadAudio(string artist, string title, string query, ListViewItem item)

@@ -34,7 +34,7 @@ namespace TrackTrek.Miscs
             }
             return await youtube.Videos.GetAsync(found.Url);
         }
-
+        
         public class VideoInfo
         {
             public string Title { get; set; }
