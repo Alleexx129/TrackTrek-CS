@@ -37,6 +37,13 @@ namespace TrackTrek.Miscs
         
         public class VideoInfo
         {
+            public VideoInfo()
+            {
+                this.Title = string.Empty;
+                this.Album = string.Empty;
+                this.Artist = string.Empty;
+                this.AlbumImage = string.Empty;
+            }
             public string Title { get; set; }
             public string Artist { get; set; }
             public string AlbumImage { get; set; }
@@ -65,30 +72,35 @@ namespace TrackTrek.Miscs
                     continue;
                 }
 
-                if (Regex.IsMatch(item["trackName"].ToString(), Regex.Escape(newVideoInfo.Title.ToLower())) && Regex.IsMatch(item["artistName"].ToString(), Regex.Escape(newVideoInfo.Artist.ToLower())))
+                if (Regex.IsMatch(Filter.FilterArtistName(item["artistName"].ToString()).ToLower(), Regex.Escape(newVideoInfo.Artist.ToLower())))
                 {
                     newVideoInfo.Album = item["collectionName"].ToString();
                     newVideoInfo.Title = item["trackName"].ToString();
                     newVideoInfo.Artist = item["artistName"].ToString();
                     newVideoInfo.AlbumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist);
+
                     break;
                 }
             }
 
             return newVideoInfo;
         }
-        public static async Task<string[]> GetPlaylistVideos(string playlistUrl)
+        public static async Task<List<VideoInfo>> GetPlaylistVideos(string playlistUrl)
         {
-            var youtube = new YoutubeClient();
+            YoutubeClient youtube = new YoutubeClient();
+            List<VideoInfo> videoInfos = new List<VideoInfo> { };
             var videos = await youtube.Playlists.GetVideosAsync(playlistUrl);
 
             await foreach (var video in youtube.Playlists.GetVideosAsync(playlistUrl))
             {
-                var title = video.Title;
-                var author = video.Author;
+                string title = video.Title;
+                string author = video.Author.ToString();
+
+                VideoInfo videoInfo = await FetchVideoInfos(title, author);
+                Sys.debug($"Artist: {videoInfo.Artist} Title: {videoInfo.Title} Album: {videoInfo.Album} AlbumImage: {videoInfo.AlbumImage}");
             }
 
-            return new string[] { };
+            return videoInfos;
         }
     }   
     

@@ -75,9 +75,10 @@ namespace TrackTrek.Audio
 
         private protected static async Task<string> DownloadPlaylist(VideoInfo[] playlistInfo)
         {
-            foreach(VideoInfo video in playlistInfo)
+            Sys.debug(playlistInfo.ToString());
+            foreach (VideoInfo video in playlistInfo)
             {
-                // After class ;)
+                // coming
             }
             return "";
         }

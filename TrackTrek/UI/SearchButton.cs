@@ -27,6 +27,7 @@ namespace TrackTrek.UI
     {
         protected override async void OnClick(EventArgs e)
         {
+            await Searching.GetPlaylistVideos("https://youtube.com/playlist?list=PLYY_JhYfJvbUfM1i86d3aCrev5AaEDvcA&si=Yh0nXXjUh7b7xseM");
             Form1.downloadProgress.Value = 0;
             var youtube = new YoutubeClient();
 
