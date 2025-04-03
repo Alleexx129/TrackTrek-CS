@@ -7,8 +7,8 @@ namespace TrackTrek.Miscs
     {
         public static byte[] ResizeImage(byte[] imageBytes)
         {
-            using (var ms = new MemoryStream(imageBytes))
-            using (var img = Image.FromStream(ms))
+            MemoryStream ms = new MemoryStream(imageBytes);
+            using (Image img = Image.FromStream(ms))
             {
                 int width = img.Width;
                 int height = img.Height;

@@ -43,7 +43,7 @@ namespace TrackTrek.Miscs
                 this.Title = string.Empty;
                 this.Album = string.Empty;
                 this.Artist = string.Empty;
-                this.AlbumImage = new byte[] {};
+                this.AlbumImage = new byte[0];
             }
             public string Title { get; set; }
             public string Artist { get; set; }
@@ -76,6 +76,8 @@ namespace TrackTrek.Miscs
                 if (Regex.IsMatch(Filter.FilterArtistName(item["artistName"].ToString()).ToLower(), Regex.Escape(newVideoInfo.Artist.ToLower())))
                 {
                     string albumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist);
+                    
+                    
                     newVideoInfo.Album = item["collectionName"].ToString();
                     newVideoInfo.Title = item["trackName"].ToString();
                     newVideoInfo.Artist = item["artistName"].ToString();
@@ -97,9 +99,10 @@ namespace TrackTrek.Miscs
             {
                 string title = video.Title;
                 string author = video.Author.ToString();
-                byte[] imageByte = await CustomMetaData.DownloadThumbnailAsBytes(video.Thumbnails[0].Url);
+                byte[] imageByte = await CustomMetaData.DownloadThumbnailAsBytes(video.Thumbnails[video.Thumbnails.Count - 1].Url);
+                byte[] resizedImage = ImageUtils.ResizeImage(imageByte);
 
-                VideoInfo videoInfo = await FetchVideoInfos(title, author, ImageUtils.ResizeImage(imageByte));
+                VideoInfo videoInfo = await FetchVideoInfos(title, author, resizedImage);
                 Sys.debug($"Artist: {videoInfo.Artist} Title: {videoInfo.Title} Album: {videoInfo.Album} AlbumImage: {videoInfo.AlbumImage}");
             }
 
