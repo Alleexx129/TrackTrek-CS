@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using TrackTrek.Audio;
 using YoutubeExplode;
 using YoutubeExplode.Common;
 using YoutubeExplode.Search;
@@ -42,17 +43,17 @@ namespace TrackTrek.Miscs
                 this.Title = string.Empty;
                 this.Album = string.Empty;
                 this.Artist = string.Empty;
-                this.AlbumImage = string.Empty;
+                this.AlbumImage = new byte[] {};
             }
             public string Title { get; set; }
             public string Artist { get; set; }
-            public string AlbumImage { get; set; }
+            public byte[] AlbumImage { get; set; }
             public string Album { get; set; }
         }
 
-        public static async Task<VideoInfo> FetchVideoInfos(string title, string uploader, string thumbnail)
+        public static async Task<VideoInfo> FetchVideoInfos(string title, string uploader, byte[] thumbnail)
         {
-            VideoInfo newVideoInfo = new VideoInfo{ Title = "", Artist = "", AlbumImage = "", Album = thumbnail, };
+            VideoInfo newVideoInfo = new VideoInfo{ Title = "", Artist = "", AlbumImage = thumbnail, Album = "Unknown", };
 
             string[] filteredUploaderAndTitle = Filter.ToTitleAndArtist(title, uploader);
 
@@ -74,10 +75,11 @@ namespace TrackTrek.Miscs
 
                 if (Regex.IsMatch(Filter.FilterArtistName(item["artistName"].ToString()).ToLower(), Regex.Escape(newVideoInfo.Artist.ToLower())))
                 {
+                    string albumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist)
                     newVideoInfo.Album = item["collectionName"].ToString();
                     newVideoInfo.Title = item["trackName"].ToString();
                     newVideoInfo.Artist = item["artistName"].ToString();
-                    newVideoInfo.AlbumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist);
+                    newVideoInfo.AlbumImage = await CustomMetaData.DownloadThumbnailAsBytes(albumImage);
 
                     break;
                 }
@@ -95,8 +97,9 @@ namespace TrackTrek.Miscs
             {
                 string title = video.Title;
                 string author = video.Author.ToString();
+                byte[] imageByte = await CustomMetaData.DownloadThumbnailAsBytes(video.Thumbnails[0].Url);
 
-                VideoInfo videoInfo = await FetchVideoInfos(title, author, ImageUtils.ResizeImage(video.Thumbnails[0].Url));
+                VideoInfo videoInfo = await FetchVideoInfos(title, author, ImageUtils.ResizeImage(imageByte));
                 Sys.debug($"Artist: {videoInfo.Artist} Title: {videoInfo.Title} Album: {videoInfo.Album} AlbumImage: {videoInfo.AlbumImage}");
             }
 
