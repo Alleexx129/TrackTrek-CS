@@ -16,9 +16,20 @@ namespace TrackTrek.Miscs
 {
     internal class Searching
     {
-        public static Boolean CheckIfLink(string text)
+        public static string CheckIfLink(string text)
         {
-            return text.ToLower().Contains("https") || text.ToLower().Contains("youtube.com") || text.ToLower().Contains("youtu.be");
+            string ctype = "";
+            if (text.ToLower().Contains("https") || text.ToLower().Contains("youtube.com") || text.ToLower().Contains("youtu.be"))
+            {
+                ctype = "link";
+
+                if (text.ToLower().Contains("&list="))
+                {
+                    ctype = "playlist";
+                }
+            }
+
+            return ctype;
         }
 
         public static async Task<Video> GetVideo(string query)

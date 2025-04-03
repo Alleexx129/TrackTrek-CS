@@ -33,7 +33,7 @@ namespace TrackTrek.UI
 
             string query = this.Parent.Controls.OfType<SearchBar>().FirstOrDefault()?.Text;
 
-            if (Searching.CheckIfLink(query))
+            if (Searching.CheckIfLink(query) == "link")
             {
                 ListViewItem newItem = new ListViewItem("Fetching...");
 
@@ -56,7 +56,10 @@ namespace TrackTrek.UI
 
                 Form1.downloadProgress.Value = 100;
             }
-            else
+            else if (Searching.CheckIfLink(query) == "playlist")
+            {
+
+            } else
             {
                 Form1.resultsList.Items.Clear();
                 HttpClient client = new HttpClient();

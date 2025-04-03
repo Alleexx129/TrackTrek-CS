@@ -38,11 +38,23 @@ namespace TrackTrek.Miscs
 
         private protected static async Task<string> GetAlbumImageFromSongPage(string songAlbumUrl)
         {
-            var html = await client.GetStringAsync(songAlbumUrl);
-            var doc = new HtmlAgilityPack.HtmlDocument();
-            doc.LoadHtml(html);
-            var imageNode = doc.DocumentNode.SelectSingleNode("//meta[@property='og:image']");
-            return imageNode?.GetAttributeValue("content", "") ?? "No image found";
+            int attempt = 0;
+
+            while (attempt < 5)
+            {
+                try
+                {
+                    attempt++;
+                    var html = await client.GetStringAsync(songAlbumUrl);
+                    var doc = new HtmlAgilityPack.HtmlDocument();
+                    doc.LoadHtml(html);
+                    var imageNode = doc.DocumentNode.SelectSingleNode("//meta[@property='og:image']");
+                    return imageNode?.GetAttributeValue("content", "") ?? "";
+                } catch
+                {
+                }
+            }
+            return "";
         }
 
         public static async Task<string> GetAlbumImageUrl(string albumName, string artistName)
