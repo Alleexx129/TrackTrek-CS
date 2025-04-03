@@ -75,7 +75,7 @@ namespace TrackTrek.Miscs
 
                 if (Regex.IsMatch(Filter.FilterArtistName(item["artistName"].ToString()).ToLower(), Regex.Escape(newVideoInfo.Artist.ToLower())))
                 {
-                    string albumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist)
+                    string albumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist);
                     newVideoInfo.Album = item["collectionName"].ToString();
                     newVideoInfo.Title = item["trackName"].ToString();
                     newVideoInfo.Artist = item["artistName"].ToString();
