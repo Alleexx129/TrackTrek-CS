@@ -50,9 +50,9 @@ namespace TrackTrek.Miscs
             public string Album { get; set; }
         }
 
-        public static async Task<VideoInfo> FetchVideoInfos(string title, string uploader)
+        public static async Task<VideoInfo> FetchVideoInfos(string title, string uploader, string thumbnail)
         {
-            VideoInfo newVideoInfo = new VideoInfo{ Title = "", Artist = "", AlbumImage = "", Album = "" };
+            VideoInfo newVideoInfo = new VideoInfo{ Title = "", Artist = "", AlbumImage = "", Album = thumbnail, };
 
             string[] filteredUploaderAndTitle = Filter.ToTitleAndArtist(title, uploader);
 
@@ -61,7 +61,7 @@ namespace TrackTrek.Miscs
 
             HttpClient client = new HttpClient();
 
-            HttpResponseMessage httpResponse = await client.GetAsync($"https://itunes.apple.com/search?term={newVideoInfo.Title} {newVideoInfo.Artist}&entity=song");
+            HttpResponseMessage httpResponse = await client.GetAsync($"https://itunes.apple.com/search?term={newVideoInfo.Title} by {newVideoInfo.Artist}&entity=song");
             string response = await httpResponse.Content.ReadAsStringAsync();
             dynamic responseJson = JsonNode.Parse(response)["results"];
 
@@ -96,7 +96,7 @@ namespace TrackTrek.Miscs
                 string title = video.Title;
                 string author = video.Author.ToString();
 
-                VideoInfo videoInfo = await FetchVideoInfos(title, author);
+                VideoInfo videoInfo = await FetchVideoInfos(title, author, ImageUtils.ResizeImage(video.Thumbnails[0].Url));
                 Sys.debug($"Artist: {videoInfo.Artist} Title: {videoInfo.Title} Album: {videoInfo.Album} AlbumImage: {videoInfo.AlbumImage}");
             }
 
