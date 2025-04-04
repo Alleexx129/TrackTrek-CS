@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using FuzzySharp;
 using TrackTrek.Audio;
 using YoutubeExplode;
 using YoutubeExplode.Common;
@@ -23,7 +24,7 @@ namespace TrackTrek.Miscs
             {
                 ctype = "link";
 
-                if (text.ToLower().Contains("&list="))
+                if (text.ToLower().Contains("?list="))
                 {
                     ctype = "playlist";
                 }
@@ -74,6 +75,10 @@ namespace TrackTrek.Miscs
             HttpClient client = new HttpClient();
 
             HttpResponseMessage httpResponse = await client.GetAsync($"https://itunes.apple.com/search?term={newVideoInfo.Title} by {newVideoInfo.Artist}&entity=song");
+            while (!httpResponse.IsSuccessStatusCode)
+            {
+                httpResponse = await client.GetAsync($"https://itunes.apple.com/search?term={newVideoInfo.Title} by {newVideoInfo.Artist}&entity=song");
+            }
             string response = await httpResponse.Content.ReadAsStringAsync();
             dynamic responseJson = JsonNode.Parse(response)["results"];
 
@@ -84,13 +89,14 @@ namespace TrackTrek.Miscs
                     continue;
                 }
 
-                if (Regex.IsMatch(Filter.FilterArtistName(item["artistName"].ToString()).ToLower(), Regex.Escape(newVideoInfo.Artist.ToLower())))
+                Sys.debug(Fuzz.PartialRatio(Filter.FilterArtistName(item["artistName"].ToString()), newVideoInfo.Artist.ToLower()).ToString());
+                if (Fuzz.PartialRatio(Filter.FilterArtistName(item["artistName"].ToString()), newVideoInfo.Artist.ToLower()) >= 45);
                 {
-                    string albumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist);
-                    
                     newVideoInfo.Album = item["collectionName"].ToString();
                     newVideoInfo.Title = item["trackName"].ToString();
                     newVideoInfo.Artist = item["artistName"].ToString();
+                    string albumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist);
+
                     newVideoInfo.AlbumImage = await CustomMetaData.DownloadThumbnailAsBytes(albumImage);
 
                     break;
@@ -113,7 +119,11 @@ namespace TrackTrek.Miscs
                 byte[] resizedImage = ImageUtils.ResizeImage(imageByte);
 
                 VideoInfo videoInfo = await FetchVideoInfos(title, author, resizedImage);
-                Sys.debug($"Artist: {videoInfo.Artist} Title: {videoInfo.Title} Album: {videoInfo.Album} AlbumImage: {videoInfo.AlbumImage}");
+                if (videoInfo.Artist != string.Empty)
+                {
+                    videoInfos.Add(videoInfo);
+                }
+                Sys.debug($"Artist: {videoInfo.Artist} Title: {videoInfo.Title} Album: {videoInfo.Album}");
             }
 
             return videoInfos;

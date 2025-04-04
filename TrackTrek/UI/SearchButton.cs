@@ -20,6 +20,7 @@ using System.Reflection.Metadata;
 using System.Text.Json.Serialization;
 using System.Text.Json.Nodes;
 using static MediaToolkit.Model.Metadata;
+using static TrackTrek.Miscs.Searching;
 
 namespace TrackTrek.UI
 {
@@ -27,7 +28,6 @@ namespace TrackTrek.UI
     {
         protected override async void OnClick(EventArgs e)
         {
-            await Searching.GetPlaylistVideos("https://youtube.com/playlist?list=PLYY_JhYfJvbWb8mpWoej-Uz05aR4i7zOk&si=Lnhnd6GBzQWMP_e5");
             Form1.downloadProgress.Value = 0;
             var youtube = new YoutubeClient();
 
@@ -41,7 +41,7 @@ namespace TrackTrek.UI
                 Form1.downloadQueue.Items.Add(newItem);
 
                 YoutubeExplode.Videos.Video videoInfo = await youtube.Videos.GetAsync(query);
-
+            
                 Sys.debug($"Starting download...");
 
                 string output = await Download.EnqueueDownload(videoInfo.Author.ToString(), videoInfo.Title.ToString(), query, newItem);
@@ -58,7 +58,28 @@ namespace TrackTrek.UI
             }
             else if (Searching.CheckIfLink(query) == "playlist")
             {
+                List<VideoInfo> videoInfos = await Searching.GetPlaylistVideos(query);
 
+                foreach (var video in videoInfos)
+                {
+                    Sys.debug($"Artist: {video.Artist} Title: {video.Title} Album: {video.Album}");
+                    if (Form1.resultsList.SmallImageList == null)
+                    {
+                        Form1.resultsList.SmallImageList = new ImageList();
+                        Form1.resultsList.SmallImageList.ImageSize = new Size(70, 70);
+                    }
+
+                    ListViewItem listItem = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
+                    byte[] resizedImage = video.AlbumImage;
+                    MemoryStream imageStream = new MemoryStream(resizedImage);
+                    Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
+
+                    listItem.SubItems.Add(video.Title);
+                    listItem.SubItems.Add(video.Artist);
+                    listItem.SubItems.Add(video.Album);
+
+                    Form1.resultsList.Items.Add(listItem);
+                }
             } else
             {
                 Form1.resultsList.Items.Clear();

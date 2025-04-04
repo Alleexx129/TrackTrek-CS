@@ -42,16 +42,17 @@ namespace TrackTrek.Miscs
 
             while (attempt < 5)
             {
+                attempt++;
                 try
                 {
-                    attempt++;
                     var html = await client.GetStringAsync(songAlbumUrl);
                     var doc = new HtmlAgilityPack.HtmlDocument();
                     doc.LoadHtml(html);
                     var imageNode = doc.DocumentNode.SelectSingleNode("//meta[@property='og:image']");
                     return imageNode?.GetAttributeValue("content", "") ?? "";
-                } catch
+                } catch (Exception ex)
                 {
+                    Sys.debug(ex);
                 }
             }
             return "";
