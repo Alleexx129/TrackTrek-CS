@@ -21,6 +21,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json.Nodes;
 using static MediaToolkit.Model.Metadata;
 using static TrackTrek.Miscs.Searching;
+using System.Buffers.Text;
 
 namespace TrackTrek.UI
 {
@@ -58,31 +59,7 @@ namespace TrackTrek.UI
             }
             else if (Searching.CheckIfLink(query) == "playlist")
             {
-                List<VideoInfo> videoInfos = await Searching.GetPlaylistVideos(query);
-                int index = 0;
-
-                foreach (var video in videoInfos)
-                {
-                    index++;
-                    Form1.downloadProgress.Value = index / videoInfos.Count * 100;
-                    if (Form1.resultsList.SmallImageList == null)
-                    {
-                        Form1.resultsList.SmallImageList = new ImageList();
-                        Form1.resultsList.SmallImageList.ImageSize = new Size(70, 70);
-                    }
-
-                    ListViewItem listItem = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
-                    byte[] resizedImage = video.AlbumImage;
-                    MemoryStream imageStream = new MemoryStream(resizedImage);
-                    Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
-
-                    listItem.SubItems.Add(video.Title);
-                    listItem.SubItems.Add(video.Artist);
-                    listItem.SubItems.Add(video.Album);
-
-                    Form1.resultsList.Items.Add(listItem);
-                }
-
+                Form1.searchButton.Enabled = false;
                 Form1.searchButton.Text = "Download Playlist";
                 Program.searchingPlaylist = true;
                 Form1.searchButton.Click += async (sender, e) =>
@@ -112,11 +89,7 @@ namespace TrackTrek.UI
 
                             Sys.debug("Audio downloaded!: " + output);
 
-                            string albumImageUrl = await ImageUtils.GetAlbumImageUrl(album, artist);
-
-                            Sys.debug("Adding metadata: " + albumImageUrl);
-
-                            await CustomMetaData.Add(output, albumImageUrl, artist, title, album);
+                            await CustomMetaData.Add(output, Convert.FromBase64String(resultItem.SubItems[4].Text), artist, title, album);
 
                             Form1.downloadProgress.Value = 100;
                         }
@@ -131,6 +104,36 @@ namespace TrackTrek.UI
                     }
                 };
 
+
+
+                List<VideoInfo> videoInfos = await Searching.GetPlaylistVideos(query);
+                int index = 0;
+
+                foreach (var video in videoInfos)
+                {
+                    index++;
+                    Form1.downloadProgress.Value = index / videoInfos.Count * 100;
+                    if (Form1.resultsList.SmallImageList == null)
+                    {
+                        Form1.resultsList.SmallImageList = new ImageList();
+                        Form1.resultsList.SmallImageList.ImageSize = new Size(70, 70);
+                    }
+
+                    ListViewItem listItem = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
+                    byte[] resizedImage = video.AlbumImage;
+                    MemoryStream imageStream = new MemoryStream(resizedImage);
+                    Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
+
+                    listItem.SubItems.Add(video.Title);
+                    listItem.SubItems.Add(video.Artist);
+                    listItem.SubItems.Add(video.Album);
+                    listItem.SubItems.Add(Convert.ToBase64String(video.AlbumImage));
+
+                    Form1.resultsList.Items.Add(listItem);
+                }
+
+
+                Form1.searchButton.Enabled = true;
             } else
             {
                 Form1.resultsList.Items.Clear();

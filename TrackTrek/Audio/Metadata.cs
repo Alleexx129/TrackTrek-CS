@@ -8,7 +8,7 @@ namespace TrackTrek.Audio
 {
     internal class CustomMetaData
     {
-       public static async Task Add(string path, string imageUrl, string artist, string title, string? albumName = "")
+       public static async Task Add(string path, dynamic imageUrl, string artist, string title, string? albumName = "")
         {
             //string lyricsUrl;
             TagLib.File file = TagLib.File.Create(path);
@@ -32,12 +32,22 @@ namespace TrackTrek.Audio
             file.Save();
         }
     
-        public static async Task<byte[]> DownloadThumbnailAsBytes(string url)
+        public static async Task<byte[]> DownloadThumbnailAsBytes(object url)
             {
-                using (HttpClient client = new HttpClient())
+                if (url is byte[] byteArray)
                 {
-                    return await client.GetByteArrayAsync(url);
+                        return byteArray;
+                } else if (url is string videoUrl)
+                {
+                    using (HttpClient client = new HttpClient())
+                    {
+                        return await client.GetByteArrayAsync(videoUrl);
+                    }
+                } else
+                {
+                return new byte[0];
                 }
+                
             }
         }
     }
