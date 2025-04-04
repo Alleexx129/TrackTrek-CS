@@ -109,10 +109,18 @@ namespace TrackTrek.Miscs
         {
             YoutubeClient youtube = new YoutubeClient();
             List<VideoInfo> videoInfos = new List<VideoInfo> { };
-            var videos = await youtube.Playlists.GetVideosAsync(playlistUrl);
-
-            await foreach (var video in youtube.Playlists.GetVideosAsync(playlistUrl))
+            var videos = youtube.Playlists.GetVideosAsync(playlistUrl);
+            int index = 0;
+            var countTask = Task.Run(async () =>
             {
+                var playlist = await youtube.Playlists.GetAsync(playlistUrl);
+                return playlist.Count ?? 1;
+            });
+
+            await foreach (var video in videos)
+            {
+                index++;
+                Form1.downloadProgress.Value = index * 100 / await countTask;
                 string title = video.Title;
                 string author = video.Author.ToString();
                 byte[] imageByte = await CustomMetaData.DownloadThumbnailAsBytes(video.Thumbnails[video.Thumbnails.Count - 1].Url);

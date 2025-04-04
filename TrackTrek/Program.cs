@@ -11,8 +11,8 @@ namespace TrackTrek
 {
     internal static class Program
     {
-
-        public static Boolean debug = false;
+        public static bool searchingPlaylist = false;
+        public static bool debug = false;
         public static string maxResults = "10";
         /// <summary>
         ///  The main entry point for the application.

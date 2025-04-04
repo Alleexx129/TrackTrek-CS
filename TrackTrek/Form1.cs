@@ -10,7 +10,7 @@ namespace TrackTrek
     public partial class Form1 : Form
     {
         private SearchBar searchBox;
-        private SearchButton searchButton;
+        public static SearchButton searchButton;
         public static ListView resultsList;
         public static ListView downloadQueue;
         private Button settingsButton;
@@ -50,7 +50,7 @@ namespace TrackTrek
                 ForeColor = Color.White,
                 Anchor = (AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right)
             };
-            this.searchButton = new SearchButton
+            Form1.searchButton = new SearchButton
             {
                 Text = "Search",
                 Left = 420,
@@ -109,7 +109,7 @@ namespace TrackTrek
                 Height = 20,
                 Anchor = (AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right)
             };
-            Program.add_controls(base.Controls, this.searchBox, this.searchButton, this.settingsButton, Form1.resultsList, Form1.downloadQueue, Form1.downloadProgress);
+            Program.add_controls(base.Controls, this.searchBox, Form1.searchButton, this.settingsButton, Form1.resultsList, Form1.downloadQueue, Form1.downloadProgress);
             base.Resize += this.Form1_Resize;
         }
 

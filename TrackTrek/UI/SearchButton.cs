@@ -24,7 +24,7 @@ using static TrackTrek.Miscs.Searching;
 
 namespace TrackTrek.UI
 {
-    internal class SearchButton : Button
+    public class SearchButton : Button
     {
         protected override async void OnClick(EventArgs e)
         {
@@ -59,10 +59,12 @@ namespace TrackTrek.UI
             else if (Searching.CheckIfLink(query) == "playlist")
             {
                 List<VideoInfo> videoInfos = await Searching.GetPlaylistVideos(query);
+                int index = 0;
 
                 foreach (var video in videoInfos)
                 {
-                    Sys.debug($"Artist: {video.Artist} Title: {video.Title} Album: {video.Album}");
+                    index++;
+                    Form1.downloadProgress.Value = index / videoInfos.Count * 100;
                     if (Form1.resultsList.SmallImageList == null)
                     {
                         Form1.resultsList.SmallImageList = new ImageList();
@@ -80,6 +82,55 @@ namespace TrackTrek.UI
 
                     Form1.resultsList.Items.Add(listItem);
                 }
+
+                Form1.searchButton.Text = "Download Playlist";
+                Program.searchingPlaylist = true;
+                Form1.searchButton.Click += async (sender, e) =>
+                {
+                    if (Program.searchingPlaylist == true)
+                    {
+                        foreach (ListViewItem item in Form1.resultsList.Items)
+                        {
+                            ListViewItem resultItem = item;
+                            ListViewItem newItem = new ListViewItem("Loading...");
+
+                            string title = resultItem.SubItems[1].Text;
+                            string artist = resultItem.SubItems[2].Text;
+                            string album = resultItem.SubItems[3].Text;
+
+                            newItem.SubItems.Add("Loading...");
+                            lock (Form1.downloadQueue.Items)
+                            {
+                                Form1.downloadQueue.Items.Add(newItem);
+                            }
+
+                            YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title + " - " + artist);
+
+                            Sys.debug("Starting download...");
+
+                            string output = await Download.EnqueueDownload(artist.Replace("/", "-"), title.Replace("/", "-"), videoInfo.Url, newItem);
+
+                            Sys.debug("Audio downloaded!: " + output);
+
+                            string albumImageUrl = await ImageUtils.GetAlbumImageUrl(album, artist);
+
+                            Sys.debug("Adding metadata: " + albumImageUrl);
+
+                            await CustomMetaData.Add(output, albumImageUrl, artist, title, album);
+
+                            Form1.downloadProgress.Value = 100;
+                        }
+                    }
+                };
+                Form1.searchButton.TextChanged += (sender, e) =>
+                {
+                    if (!Form1.searchButton.Text.Contains("?list="))
+                    {
+                        Form1.searchButton.Text = "Search";
+                        Program.searchingPlaylist = false;
+                    }
+                };
+
             } else
             {
                 Form1.resultsList.Items.Clear();
