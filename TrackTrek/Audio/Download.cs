@@ -37,6 +37,11 @@ namespace TrackTrek.Audio
             String outputPath = Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"), $"{name}.mp3");
             item.SubItems[0].Text = outputPath;
 
+            if (File.Exists(outputPath))
+            {
+                File.Delete(outputPath);
+            }
+
             Sys.debug("Output path: " + outputPath);
             ProcessStartInfo processStartInfo = new ProcessStartInfo
             {
@@ -53,8 +58,24 @@ namespace TrackTrek.Audio
                 string output = await process.StandardOutput.ReadToEndAsync();
                 string error = await process.StandardError.ReadToEndAsync();
 
-                process.WaitForExit();
+                Task processTask = Task.Run(async () =>
+                {
+                    await process.WaitForExitAsync();
+                });
 
+                if (await Task.WhenAny(processTask, Task.Delay(30000)) != processTask)
+                {
+                    try
+                    {
+                        process.Kill();
+                        Sys.debug("Killed ffmpeg");
+                        return await ConvertAndDelete(name, path, item);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception("Error while killing FFmpeg process: " + ex.Message);
+                    }
+                }
 
                 if (process.ExitCode != 0)
                 {
