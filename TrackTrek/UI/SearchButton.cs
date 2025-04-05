@@ -91,7 +91,7 @@ namespace TrackTrek.UI
                                     output = await Download.EnqueueDownload(artist.Replace("/", "-"), title.Replace("/", "-"), videoInfo.Url, newItem);
                                 });
 
-                                for (int i = 0; i < 15; i++)
+                                for (int i = 0; i < 60; i++)
                                 {
                                     await Task.Delay(1000);
 
@@ -138,6 +138,7 @@ namespace TrackTrek.UI
                 List<VideoInfo> videoInfos = await Searching.GetPlaylistVideos(query);
                 int index = 0;
 
+                Form1.resultsList.Items.Clear();
                 foreach (var video in videoInfos)
                 {
                     index++;

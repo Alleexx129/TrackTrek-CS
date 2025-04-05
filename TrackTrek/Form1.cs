@@ -35,7 +35,7 @@ namespace TrackTrek
 
         private void SetupUI()
         {
-            this.Text = "TrackTrek - YouTube Music Downloader";
+            this.Text = "[Censored Name] - YouTube Music Downloader";
             this.BackColor = Color.FromArgb(30, 30, 30);
             this.ForeColor = Color.White;
             base.Size = new Size(800, 600);

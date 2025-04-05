@@ -34,7 +34,7 @@ namespace TrackTrek.Audio
 
         private static async Task<string> ConvertAndDelete(string name, string path, ListViewItem item)
         {
-            String outputPath = Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"), $"{name}.mp3");
+            string outputPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{name}.mp3");
             item.SubItems[0].Text = outputPath;
 
             if (File.Exists(outputPath))
@@ -43,7 +43,7 @@ namespace TrackTrek.Audio
             }
 
             Sys.debug("Output path: " + outputPath);
-            ProcessStartInfo processStartInfo = new ProcessStartInfo
+            var processStartInfo = new ProcessStartInfo
             {
                 FileName = "ffmpeg",
                 Arguments = $"-i \"{path}\" -c:a libmp3lame -b:a 192k -ar 44100 -ac 2 -threads 4 -y \"{outputPath}\"",
@@ -53,34 +53,20 @@ namespace TrackTrek.Audio
                 CreateNoWindow = true
             };
 
-            using (Process process = Process.Start(processStartInfo))
+            using (var process = new Process { StartInfo = processStartInfo })
             {
-                string output = await process.StandardOutput.ReadToEndAsync();
-                string error = await process.StandardError.ReadToEndAsync();
+                process.Start();
 
-                Task processTask = Task.Run(async () =>
-                {
-                    await process.WaitForExitAsync();
-                });
+                var outputTask = process.StandardOutput.ReadToEndAsync();
+                var errorTask = process.StandardError.ReadToEndAsync();
+                var waitTask = process.WaitForExitAsync();
 
-                if (await Task.WhenAny(processTask, Task.Delay(30000)) != processTask)
-                {
-                    try
-                    {
-                        process.Kill();
-                        Sys.debug("Killed ffmpeg");
-                        return await ConvertAndDelete(name, path, item);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception("Error while killing FFmpeg process: " + ex.Message);
-                    }
-                }
+                string output = await outputTask;
+                string error = await errorTask;
 
                 if (process.ExitCode != 0)
                 {
                     Sys.debug($"FFMPEG ERROR: {error}");
-                    await ConvertAndDelete(name, path, item);
                     throw new Exception($"FFmpeg conversion failed: {error}");
                 }
 
@@ -93,6 +79,7 @@ namespace TrackTrek.Audio
                 return outputPath;
             }
         }
+
 
         private protected static async Task<string> DownloadPlaylist(VideoInfo[] playlistInfo)
         {

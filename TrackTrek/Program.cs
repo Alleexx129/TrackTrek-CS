@@ -40,15 +40,15 @@ namespace TrackTrek
             {
                 // To customize application configuration such as set high DPI settings or default font,
                 // see https://aka.ms/applicationconfiguration.
-                
+
                 ApplicationConfiguration.Initialize();
                 Application.Run(new Form1());
             }
             catch (Exception e)
             {
                 Sys.debug(e.ToString());
-                File.WriteAllText(DateTime.Today.ToString("yyyy-MM-dd") + "_error.txt", e.ToString());
-                MessageBox.Show("An unexpected error occurred: " + e.ToString());
+                File.WriteAllText(Path.Combine(path1, DateTime.Today.ToString("yyyy-MM-dd") + "_error.txt"), e.ToString());
+                //MessageBox.Show("An unexpected error occurred: " + e.ToString());
             }
             ;
 
@@ -83,7 +83,7 @@ namespace TrackTrek
                 {
                     Form1.downloadQueue.Items.Add(newItem);
                 }
-                
+
 
                 YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title + " - " + artist);
 
@@ -103,5 +103,5 @@ namespace TrackTrek
             });
         }
     }
-        
+
 }
