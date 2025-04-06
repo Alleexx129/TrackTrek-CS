@@ -126,9 +126,9 @@ namespace TrackTrek.UI
                     }
                 };
                 Program.searchingPlaylist = true;
-                Form1.searchButton.TextChanged += (sender, e) =>
+                Form1.searchBox.TextChanged += (sender, e) =>
                 {
-                    if (!Form1.searchButton.Text.Contains("?list="))
+                    if (!Form1.searchBox.Text.Contains("?list="))
                     {
                         Form1.searchButton.Text = "Search";
                         Program.searchingPlaylist = false;

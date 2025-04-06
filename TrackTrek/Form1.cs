@@ -9,7 +9,7 @@ namespace TrackTrek
 {
     public partial class Form1 : Form
     {
-        private SearchBar searchBox;
+        public static SearchBar searchBox;
         public static SearchButton searchButton;
         public static ListView resultsList;
         public static ListView downloadQueue;
@@ -40,7 +40,7 @@ namespace TrackTrek
             this.ForeColor = Color.White;
             base.Size = new Size(800, 600);
             base.AutoScaleMode = AutoScaleMode.Font;
-            this.searchBox = new SearchBar
+            Form1.searchBox = new SearchBar
             {
                 Width = 400,
                 Top = 20,
@@ -109,7 +109,7 @@ namespace TrackTrek
                 Height = 20,
                 Anchor = (AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right)
             };
-            Program.add_controls(base.Controls, this.searchBox, Form1.searchButton, this.settingsButton, Form1.resultsList, Form1.downloadQueue, Form1.downloadProgress);
+            Program.add_controls(base.Controls, Form1.searchBox, Form1.searchButton, this.settingsButton, Form1.resultsList, Form1.downloadQueue, Form1.downloadProgress);
             base.Resize += this.Form1_Resize;
         }
 
