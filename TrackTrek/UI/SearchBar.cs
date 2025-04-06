@@ -14,7 +14,12 @@ namespace TrackTrek.UI
         {
             base.OnTextChanged(e);
             TextContent = this.Text;
-            
+
+            if (!this.Text.Contains("?list="))
+            {
+                Form1.searchButton.Text = "Search";
+                Program.searchingPlaylist = false;
+            }
         }
     }
 }
