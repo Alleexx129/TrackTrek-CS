@@ -59,12 +59,12 @@ namespace TrackTrek.UI
             }
             else if (Searching.CheckIfLink(query) == "playlist")
             {
-                Form1.searchButton.Enabled = false;
                 Form1.searchButton.Text = "Download Playlist";
                 Form1.searchButton.Click += async (sender, e) =>
                 {
                     if (Program.searchingPlaylist == true)
                     {
+                        Form1.searchButton.Enabled = false;
                         foreach (ListViewItem item in Form1.resultsList.Items)
                         {
                             TaskCompletionSource<bool> taskCompletionSource = new TaskCompletionSource<bool>();
@@ -121,6 +121,8 @@ namespace TrackTrek.UI
                             }
                             */
                         }
+                        Form1.searchButton.Text = "Search";
+                        Form1.searchButton.Enabled = true;
                     }
                 };
                 Program.searchingPlaylist = true;
