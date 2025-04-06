@@ -28,7 +28,7 @@ namespace TrackTrek.Settings
         }
         private void SetupUI()
         {
-            Text = "[Censored Name] - Settings";
+            Text = "TrackTrek - Settings";
             BackColor = Color.FromArgb(30, 30, 30);
             ForeColor = Color.White;
             Size = new Size(400, 300);
