@@ -16,17 +16,14 @@
 ### Install depencies
 [.Net Desktop Runtime 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.14-windows-x64-installer)
 
-
-I will make this into a exe file soon with UI, but I will keep it open-source of course as always
-
 ## How to use?
-- Enter youtube link or keywork
-- Choose between 5 first searches if you select with keywords
+- Enter youtube link, keyword or a youtube playlist
+- Choose between 5 first searches if you select with keywords, the settings for max results are customizable.
 
 ## Dependencies (No installation required)
 - YoutubeExplode
 - TagLib
-- MediaToolkit
+- FFmpeg (installed automatically)
 
 ## Disclaimer
 **TrackTrek** is a tool designed to assist users in downloading music from online sources. By using this program, you acknowledge and agree that:
