@@ -55,7 +55,10 @@ namespace TrackTrek.UI
 
                 await CustomMetaData.Add(output, thumbnail.Url, videoInfo.Author.ToString(), videoInfo.Title.ToString());
 
-                Form1.downloadProgress.Value = 100;
+                Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                {
+                    Form1.downloadProgress.Value = 100;
+                }));
             }
             else if (Searching.CheckIfLink(query) == "playlist")
             {
@@ -109,7 +112,10 @@ namespace TrackTrek.UI
                                 }
 
 
-                                Form1.downloadProgress.Value = 100;
+                                Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                                {
+                                    Form1.downloadProgress.Value = 100;
+                                }));
                                 taskCompletionSource.SetResult(true);
                             });
                             /*
@@ -136,7 +142,11 @@ namespace TrackTrek.UI
                 foreach (var video in videoInfos)
                 {
                     index++;
-                    Form1.downloadProgress.Value = index / videoInfos.Count * 100;
+                    Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                    {
+                        Form1.downloadProgress.Value = 100;
+                    }));
+                    
                     if (Form1.resultsList.SmallImageList == null)
                     {
                         Form1.resultsList.SmallImageList = new ImageList();

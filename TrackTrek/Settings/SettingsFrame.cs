@@ -17,7 +17,9 @@ namespace TrackTrek.Settings
     {
         private DebugButton debugButton;
         private protected TextBox maxResultText;
+        private protected Button customPathText;
         private Label maxResultLabel;
+        private Label customPathLabel;
 
         public SettingsFrame()
         {
@@ -42,13 +44,13 @@ namespace TrackTrek.Settings
                 Text = $"Debug: {Program.debug.ToString()}",
                 Checked = Program.debug
             };
-
+            
             maxResultText = new TextBox
             {
                 PlaceholderText = "Enter a number...",
                 Text = Program.maxResults.ToString(),
                 Width = 40,
-                Top = 40,
+                Top = 45,
                 Left = 10
             };
 
@@ -58,6 +60,22 @@ namespace TrackTrek.Settings
                 Width = 100,
                 Top = 45,
                 Left = 50
+            };
+
+            customPathText = new Button
+            {
+                Text = "Select a Folder",
+                Width = 100,
+                Top = 75,
+                Left = 10
+            };
+
+            customPathLabel = new Label
+            {
+                Text = "Custom Path",
+                Width = 100,
+                Top = 75,
+                Left = 125
             };
 
 
@@ -82,6 +100,24 @@ namespace TrackTrek.Settings
 
                 File.WriteAllText(settingsPath, json.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
             };
+
+            customPathText.MouseClick += (sender, e) =>
+            {
+                FolderBrowserDialog folderBrowser = new FolderBrowserDialog();
+                folderBrowser.ShowDialog();
+                folderBrowser.Description = "Select a folder to save downloaded musics";
+                folderBrowser.RootFolder = Environment.SpecialFolder.MyComputer;
+                string mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TrackTrek");
+                string settingsPath = Path.Combine(mainPath, "Settings.json");
+
+                Program.customPath = folderBrowser.SelectedPath.Replace("\\", "\\\\");
+                string jsonString = File.ReadAllText(settingsPath);
+                JsonNode json = JsonNode.Parse(jsonString);
+
+                json["customPath"] = Program.customPath;
+
+                File.WriteAllText(settingsPath, json.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+            };
         }
 
         private void addControls()
@@ -89,6 +125,10 @@ namespace TrackTrek.Settings
             Controls.Add(debugButton);
             Controls.Add(maxResultText);
             Controls.Add(maxResultLabel);
+            Controls.Add(customPathLabel);
+            Controls.Add(customPathText);
         }
+        
     }
+    
 }

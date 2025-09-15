@@ -6,6 +6,7 @@ using TrackTrek.Miscs;
 using TrackTrek.UI;
 using YoutubeExplode.Common;
 using YoutubeExplode;
+using AngleSharp.Common;
 
 namespace TrackTrek
 {
@@ -14,6 +15,7 @@ namespace TrackTrek
         public static bool searchingPlaylist = false;
         public static bool debug = false;
         public static string maxResults = "10";
+        public static string customPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
@@ -27,12 +29,18 @@ namespace TrackTrek
             try
             {
                 Program.debug = jsonNode["debug"].GetValue<bool>();
+                if (!jsonNode.AsArray().Contains("customPath"))
+                {
+                    jsonNode["customPath"] = Program.customPath;
+                    File.WriteAllText(path, jsonNode.ToJsonString());
+                }
                 Program.maxResults = jsonNode["maxResults"].GetValue<string>();
             }
             catch
             {
-                File.WriteAllText(path, "{\"debug\": true, \"maxResults\": \"10\"}");
+                File.WriteAllText(path, $"{{\"debug\": true, \"maxResults\": \"10\", \"customPath\": \"{(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads")).Replace("\\", "\\\\")}\"}}");
                 Program.debug = jsonNode["debug"].GetValue<bool>();
+                Program.customPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
                 Program.maxResults = jsonNode["maxResults"].GetValue<string>();
             }
 
@@ -70,8 +78,18 @@ namespace TrackTrek
             //settingsButton.Click += SettingsButton_Click;
             resultsList.DoubleClick += (sender, e) => Task.Run(async () =>
             {
+                ListViewItem resultItem = null;
 
-                ListViewItem resultItem = resultsList.SelectedItems[0];
+                Form1.resultsList.Invoke(new MethodInvoker(() =>
+                {
+                    if (Form1.resultsList.SelectedItems.Count > 0)
+                    {
+                        resultItem = Form1.resultsList.SelectedItems[0];
+                    }
+                }));
+                Sys.debug("Double click detected!");
+
+                //ListViewItem resultItem = resultsList.SelectedItems[0];
                 ListViewItem newItem = new ListViewItem("Loading...");
 
                 string title = resultItem.SubItems[1].Text;
@@ -81,7 +99,10 @@ namespace TrackTrek
                 newItem.SubItems.Add("Loading...");
                 lock (Form1.downloadQueue.Items)
                 {
-                    Form1.downloadQueue.Items.Add(newItem);
+                    Form1.downloadQueue.Invoke(new MethodInvoker(() =>
+                    {
+                        Form1.downloadQueue.Items.Add(newItem);
+                    }));
                 }
 
 
@@ -99,7 +120,10 @@ namespace TrackTrek
 
                 await CustomMetaData.Add(output, albumImageUrl, artist, title, album);
 
-                Form1.downloadProgress.Value = 100;
+                Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                {
+                    Form1.downloadProgress.Value = 100;
+                }));
             });
         }
     }

@@ -34,8 +34,11 @@ namespace TrackTrek.Audio
 
         private static async Task<string> ConvertAndDelete(string name, string path, ListViewItem item)
         {
-            string outputPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{name}.mp3");
-            item.SubItems[0].Text = outputPath;
+            string outputPath = Path.Combine(Program.customPath, $"{name}.mp3");
+            Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+            {
+                item.SubItems[0].Text = outputPath;
+            }));
 
             if (File.Exists(outputPath))
             {
@@ -70,12 +73,19 @@ namespace TrackTrek.Audio
                     throw new Exception($"FFmpeg conversion failed: {error}");
                 }
 
-                Form1.downloadProgress.Value = 80;
+                Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                {
+                    Form1.downloadProgress.Value = 80;
+                }));
                 if (File.Exists(path))
                 {
                     File.Delete(path);
                 }
-                item.SubItems[1].Text = "Completed!";
+                Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                {
+                    item.SubItems[1].Text = "Completed!";
+                    Form1.downloadProgress.Value = 100;
+                }));
                 return outputPath;
             }
         }
@@ -86,7 +96,8 @@ namespace TrackTrek.Audio
             Sys.debug(playlistInfo.ToString());
             foreach (VideoInfo video in playlistInfo)
             {
-                // coming
+                // function not used :( 
+                // Will delete in the future
             }
             return "";
         }
@@ -96,8 +107,11 @@ namespace TrackTrek.Audio
             YoutubeClient youtube = new YoutubeClient();
 
             Sys.debug($"Step 1 download");
-            item.SubItems[0].Text = "Getting info...";
-            item.SubItems[1].Text = "Fetching...";
+            Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+            {
+                item.SubItems[0].Text = "Getting info...";
+                item.SubItems[1].Text = "Fetching...";
+            }));
 
             StreamManifest streamManifest = await youtube.Videos.Streams.GetManifestAsync(query);
             IStreamInfo streamInfo = streamManifest
@@ -112,21 +126,31 @@ namespace TrackTrek.Audio
             String path = Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"), $"{name}.{streamInfo.Container}");
 
             Sys.debug($"Path: {path}");
-            item.SubItems[0].Text = path;
-            item.SubItems[1].Text = "Downloading...";
 
-            Form1.downloadProgress.Maximum = 100;
-            Form1.downloadProgress.Value = 20;
+            Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+            {
+                item.SubItems[0].Text = path;
+                item.SubItems[1].Text = "Downloading...";
+
+                Form1.downloadProgress.Maximum = 100;
+                Form1.downloadProgress.Value = 20;
+            }));
 
             await youtube.Videos.Streams.DownloadAsync(streamInfo, path);
 
             Sys.debug($"Final downloading...");
 
-            Form1.downloadProgress.Value = 40;
+            Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+            {
+                Form1.downloadProgress.Value = 40;
+            }));
 
             Sys.debug($"Starting \"ConvertAndDelete\"");
 
-            item.SubItems[1].Text = "Converting...";
+            Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+            {
+                item.SubItems[1].Text = "Converting...";
+            }));
             return await ConvertAndDelete(name, path, item);
         }
 
@@ -135,9 +159,11 @@ namespace TrackTrek.Audio
             object[] list = new object[] {
                 artist, title, query, item,
             };
-
-            item.SubItems[0].Text = "Loading...";
-            item.SubItems[1].Text = "Enqueued!";
+            Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+            {
+                item.SubItems[0].Text = "Loading...";
+                item.SubItems[1].Text = "Enqueued!";
+            }));
 
             lock (queue)
             {
