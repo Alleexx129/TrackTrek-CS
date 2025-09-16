@@ -31,9 +31,11 @@ namespace TrackTrek
                 Program.debug = jsonNode["debug"].GetValue<bool>();
                 if (!jsonNode.AsArray().Contains("customPath"))
                 {
+                    MessageBox.Show("test");
                     jsonNode["customPath"] = Program.customPath;
                     File.WriteAllText(path, jsonNode.ToJsonString());
                 }
+                Program.customPath = jsonNode["customPath"].GetValue<string>();
                 Program.maxResults = jsonNode["maxResults"].GetValue<string>();
             }
             catch

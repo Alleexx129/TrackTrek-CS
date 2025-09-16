@@ -140,7 +140,11 @@ namespace TrackTrek.Settings
                 string mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TrackTrek");
                 string settingsPath = Path.Combine(mainPath, "Settings.json");
 
-                Program.customPath = folderBrowser.SelectedPath.Replace("\\", "\\\\");
+                if (folderBrowser.SelectedPath == "")
+                {
+                    return;
+                }
+                Program.customPath = folderBrowser.SelectedPath;
                 customPathDisplay.Text = folderBrowser.SelectedPath;
                 string jsonString = File.ReadAllText(settingsPath);
                 JsonNode json = JsonNode.Parse(jsonString);
