@@ -89,8 +89,8 @@ namespace TrackTrek.Miscs
                     continue;
                 }
 
-                Sys.debug(Fuzz.PartialRatio(Filter.FilterArtistName(item["artistName"].ToString()), newVideoInfo.Artist.ToLower()).ToString());
-                if (Fuzz.PartialRatio(Filter.FilterArtistName(item["artistName"].ToString()), newVideoInfo.Artist.ToLower()) >= 45);
+                Sys.debug((Fuzz.PartialRatio(Filter.FilterArtistName(item["artistName"].ToString()), newVideoInfo.Artist.ToLower())).ToString());
+                if (Fuzz.PartialRatio(Filter.FilterArtistName(item["artistName"].ToString()), newVideoInfo.Artist.ToLower()) > 45 && Fuzz.PartialRatio(Filter.FilterArtistName(item["trackName"].ToString()), newVideoInfo.Title.ToLower()) > 45)
                 {
                     newVideoInfo.Album = item["collectionName"].ToString();
                     newVideoInfo.Title = item["trackName"].ToString();

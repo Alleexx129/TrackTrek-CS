@@ -138,10 +138,14 @@ namespace TrackTrek.UI
                 List<VideoInfo> videoInfos = await Searching.GetPlaylistVideos(query);
                 int index = 0;
 
-                Form1.resultsList.Items.Clear();
+                Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                {
+                    Form1.resultsList.Items.Clear();
+                }));
                 foreach (var video in videoInfos)
                 {
                     index++;
+                    ListViewItem listItem = null;
                     Form1.downloadProgress.Invoke(new MethodInvoker(() =>
                     {
                         Form1.downloadProgress.Value = 100;
@@ -153,17 +157,26 @@ namespace TrackTrek.UI
                         Form1.resultsList.SmallImageList.ImageSize = new Size(70, 70);
                     }
 
-                    ListViewItem listItem = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
+                    Form1.resultsList.Invoke(new MethodInvoker(() =>
+                    {
+                        listItem = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
+                    }));
                     byte[] resizedImage = video.AlbumImage;
                     MemoryStream imageStream = new MemoryStream(resizedImage);
-                    Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
+                    Form1.resultsList.Invoke(new MethodInvoker(() =>
+                    {
+                        Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
 
-                    listItem.SubItems.Add(video.Title);
-                    listItem.SubItems.Add(video.Artist);
-                    listItem.SubItems.Add(video.Album);
-                    listItem.SubItems.Add(Convert.ToBase64String(video.AlbumImage));
+                        listItem.SubItems.Add(video.Title);
+                        listItem.SubItems.Add(video.Artist);
+                        listItem.SubItems.Add(video.Album);
+                        listItem.SubItems.Add(Convert.ToBase64String(video.AlbumImage));
+                    }));
 
-                    Form1.resultsList.Items.Add(listItem);
+                    Form1.resultsList.Invoke(new MethodInvoker(() =>
+                    {
+                        Form1.resultsList.Items.Add(listItem);
+                    }));
                 }
 
 
