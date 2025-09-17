@@ -108,8 +108,14 @@ namespace TrackTrek.Settings
                 Left = 5
             };
 
+            if (Program.customPath.Length > 36)
+            {
+                customPathDisplay.Text = Program.customPath.Replace("\\\\", "\\").Replace(Program.customPath.Replace("\\\\", "\\").Substring(36), "") + "...";
+            }
+            ;
 
-            maxResultText.TextChanged += (sender, e) =>
+
+                maxResultText.TextChanged += (sender, e) =>
             {
                 if (!Regex.IsMatch(maxResultText.Text, "^[0-9]+$"))
                 {
@@ -145,7 +151,15 @@ namespace TrackTrek.Settings
                     return;
                 }
                 Program.customPath = folderBrowser.SelectedPath;
-                customPathDisplay.Text = folderBrowser.SelectedPath;
+                if (Program.customPath.Length < 36)
+                {
+                    customPathDisplay.Text = Program.customPath;
+                }
+                else
+                {
+                    customPathDisplay.Text = folderBrowser.SelectedPath.Replace(folderBrowser.SelectedPath.Substring(36), "") + "...";
+                }
+
                 string jsonString = File.ReadAllText(settingsPath);
                 JsonNode json = JsonNode.Parse(jsonString);
 

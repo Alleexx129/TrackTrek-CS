@@ -13,6 +13,7 @@ namespace TrackTrek.Miscs
     internal class Sys
     {
         public static void debug<T>(T msg) {
+            
             if (Program.debug == true)
             {
                 string debugMessage = "";

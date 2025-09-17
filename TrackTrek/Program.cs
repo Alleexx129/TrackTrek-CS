@@ -26,10 +26,11 @@ namespace TrackTrek
             string path1 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TrackTrek");
             string path = Path.Combine(path1, "Settings.json");
             JsonNode jsonNode = JsonNode.Parse(File.ReadAllText(path));
+            
             try
             {
                 Program.debug = jsonNode["debug"].GetValue<bool>();
-                if (!jsonNode.AsArray().Contains("customPath"))
+                if (!jsonNode.AsObject().ContainsKey("customPath"))
                 {
                     MessageBox.Show("test");
                     jsonNode["customPath"] = Program.customPath;
@@ -38,10 +39,12 @@ namespace TrackTrek
                 Program.customPath = jsonNode["customPath"].GetValue<string>();
                 Program.maxResults = jsonNode["maxResults"].GetValue<string>();
             }
-            catch
+            catch (Exception e)
             {
                 File.WriteAllText(path, $"{{\"debug\": true, \"maxResults\": \"10\", \"customPath\": \"{(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads")).Replace("\\", "\\\\")}\"}}");
+                jsonNode = JsonNode.Parse(File.ReadAllText(path));
                 Program.debug = jsonNode["debug"].GetValue<bool>();
+                Sys.debug("Missing/Malformatted value in Settings.json, resetting to default values. Advanced: " + e.Message.ToString());
                 Program.customPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
                 Program.maxResults = jsonNode["maxResults"].GetValue<string>();
             }
@@ -106,7 +109,6 @@ namespace TrackTrek
                         Form1.downloadQueue.Items.Add(newItem);
                     }));
                 }
-
 
                 YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title + " - " + artist);
 
