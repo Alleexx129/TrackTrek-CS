@@ -22,15 +22,8 @@ namespace TrackTrek.Audio
 
     internal class Download
     {
-        private static List<object> queue = new List<object>
-        {
-            "artist",
-            "title",
-            "query",
-            new ListViewItem()
-
-        };
-        private static Boolean downloading = false;
+        private static List<object[]> queue = new List<object[]>();
+        private static bool downloading = false;
 
         private static async Task<string> ConvertAndDelete(string name, string path, ListViewItem item)
         {
@@ -112,11 +105,32 @@ namespace TrackTrek.Audio
                 item.SubItems[0].Text = "Getting info...";
                 item.SubItems[1].Text = "Fetching...";
             }));
+            StreamManifest streamManifest;
+            IStreamInfo streamInfo;
 
-            StreamManifest streamManifest = await youtube.Videos.Streams.GetManifestAsync(query);
-            IStreamInfo streamInfo = streamManifest
-                .GetAudioOnlyStreams()
-                .GetWithHighestBitrate();
+            try
+            {
+                streamManifest = await youtube.Videos.Streams.GetManifestAsync(query);
+                streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
+            }
+            catch
+            {
+                try
+                {
+                    await Task.Delay(5000);
+                    streamManifest = await youtube.Videos.Streams.GetManifestAsync(query);
+                    streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
+                } catch (Exception e)
+                {
+                    Sys.debug("Error when downloading: " + e.Message.ToString());
+                    Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                    {
+                        item.SubItems[1].Text = "Error!";
+                    }));
+                    return "C:\\";
+                }
+                
+            }
 
             Stream stream = await youtube.Videos.Streams.GetAsync(streamInfo);
             string name = title + " - " + Filter.FilterArtistName(artist);
@@ -136,7 +150,20 @@ namespace TrackTrek.Audio
                 Form1.downloadProgress.Value = 20;
             }));
 
-            await youtube.Videos.Streams.DownloadAsync(streamInfo, path);
+            try
+            {
+                await youtube.Videos.Streams.DownloadAsync(streamInfo, path);
+                Sys.debug("Downloaded");
+            } catch (Exception e)
+            {
+                Sys.debug("Error when downloading: " + e.Message.ToString());
+                Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                {
+                    item.SubItems[0].Text = path;
+                    item.SubItems[1].Text = "Error!";
+                }));
+                return path;
+            }
 
             Sys.debug($"Final downloading...");
 
@@ -156,9 +183,8 @@ namespace TrackTrek.Audio
 
         public async static Task<string> EnqueueDownload(string artist, string title, string query, ListViewItem item)
         {
-            object[] list = new object[] {
-                artist, title, query, item,
-            };
+            var list = new object[] { artist, title, query, item };
+
             Form1.downloadProgress.Invoke(new MethodInvoker(() =>
             {
                 item.SubItems[0].Text = "Loading...";
@@ -170,21 +196,18 @@ namespace TrackTrek.Audio
                 queue.Add(list);
             }
 
-            if (downloading && queue[0] != list)
+            while (true)
             {
-                while (downloading && queue[0] != list)
+                lock (queue)
                 {
-                    await Task.Delay(500);
-                } 
-            }
-            if (downloading) {
-                while (downloading)
-                {
-                    await Task.Delay(500);
+                    if (queue[0] == list && !downloading)
+                        break;
                 }
+                await Task.Delay(500);
             }
 
             downloading = true;
+
             string outp = await DownloadAudio(artist, title, query, item);
             lock (queue)
             { 

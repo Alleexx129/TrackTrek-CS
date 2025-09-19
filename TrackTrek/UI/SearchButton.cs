@@ -47,6 +47,15 @@ namespace TrackTrek.UI
 
                 string output = await Download.EnqueueDownload(videoInfo.Author.ToString(), videoInfo.Title.ToString(), query, newItem);
 
+                if (newItem.SubItems[1].Text == "Error!")
+                {
+                    Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                    {
+                        Form1.downloadProgress.Value = 100;
+                    }));
+                    return;
+                }
+
                 Sys.debug($"Audio downloaded!: {output}");
 
                 var thumbnail = videoInfo.Thumbnails[videoInfo.Thumbnails.Count - 1];
@@ -62,75 +71,80 @@ namespace TrackTrek.UI
             }
             else if (Searching.CheckIfLink(query) == "playlist")
             {
-                Form1.searchButton.Text = "Download Playlist";
-                Form1.searchButton.Click += async (sender, e) =>
+                if (Form1.searchButton.Enabled == true && Form1.searchButton.Text == "Download")
                 {
-                    if (Program.searchingPlaylist == true)
+                    Form1.searchButton.Invoke(new MethodInvoker(() =>
                     {
                         Form1.searchButton.Enabled = false;
-                        foreach (ListViewItem item in Form1.resultsList.Items)
+                    }));
+                    foreach (ListViewItem item in Form1.resultsList.Items)
+                    {
+                        TaskCompletionSource<bool> taskCompletionSource = new TaskCompletionSource<bool>();
+                        await Task.Delay(100);
+
+                        Task processTask = Task.Run(async () =>
                         {
-                            TaskCompletionSource<bool> taskCompletionSource = new TaskCompletionSource<bool>();
+                            ListViewItem resultItem = item;
+                            ListViewItem newItem = new ListViewItem("Loading...");
 
-                            Task processTask = Task.Run(async () =>
+                            string title = resultItem.SubItems[1].Text;
+                            string artist = resultItem.SubItems[2].Text;
+                            string album = resultItem.SubItems[3].Text;
+
+                            Form1.downloadQueue.Invoke(new MethodInvoker(() =>
                             {
-                                ListViewItem resultItem = item;
-                                ListViewItem newItem = new ListViewItem("Loading...");
-
-                                string title = resultItem.SubItems[1].Text;
-                                string artist = resultItem.SubItems[2].Text;
-                                string album = resultItem.SubItems[3].Text;
-
                                 newItem.SubItems.Add("Loading...");
                                 Form1.downloadQueue.Items.Add(newItem);
+                            }));
 
-                                YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title + " - " + artist);
+                            YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title + " - " + artist);
 
-                                Sys.debug("Starting download...");
+                            Sys.debug("Starting download...");
 
-                                string output = null;
-                                Task processTask = Task.Run(async () =>
-                                {
-                                    output = await Download.EnqueueDownload(artist.Replace("/", "-"), title.Replace("/", "-"), videoInfo.Url, newItem);
-                                });
+                            string output = await Download.EnqueueDownload(artist.Replace("/", "-"), title.Replace("/", "-"), videoInfo.Url, newItem);
 
-                                for (int i = 0; i < 60; i++)
-                                {
-                                    await Task.Delay(1000);
-
-                                    if (output != null && output != "")
-                                    {
-                                        break;
-                                    }
-                                }
-
-                                Sys.debug("Audio downloaded!: " + output);
-
-                                if (output != null && output != "")
-                                {
-                                    await CustomMetaData.Add(output, Convert.FromBase64String(resultItem.SubItems[4].Text), artist, title, album);
-                                }
-
-
-                                Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                            Form1.downloadQueue.Invoke(new MethodInvoker(() =>
+                            {
+                                if (newItem.SubItems[1].Text == "Error!")
                                 {
                                     Form1.downloadProgress.Value = 100;
-                                }));
-                                taskCompletionSource.SetResult(true);
-                            });
-                            /*
-                            bool isDone = await Task.WhenAny(taskCompletionSource.Task, Task.Delay(15000)) == taskCompletionSource.Task;
+                                    taskCompletionSource.SetResult(true);
+                                    return;
+                                }
 
-                            if (!isDone)
+                            }));
+                                
+                            Sys.debug("Audio downloaded!: " + output);
+
+                            await CustomMetaData.Add(output, Convert.FromBase64String(resultItem.SubItems[4].Text), artist, title, album);
+
+
+                            Form1.downloadProgress.Invoke(new MethodInvoker(() =>
                             {
-                                Sys.debug("Couldn't download: Timeout");
-                            }
-                            */
+                                Form1.downloadProgress.Value = 100;
+                            }));
+                            taskCompletionSource.SetResult(true);
+                        });
+                        /*
+                        bool isDone = await Task.WhenAny(taskCompletionSource.Task, Task.Delay(15000)) == taskCompletionSource.Task;
+
+                        if (!isDone)
+                        {
+                            Sys.debug("Couldn't download: Timeout");
                         }
+                        */
+                    }
+                    Form1.searchButton.Invoke(new MethodInvoker(() =>
+                    {
                         Form1.searchButton.Text = "Search";
                         Form1.searchButton.Enabled = true;
-                    }
-                };
+                    }));
+                    base.OnClick(e);
+                    return;
+                }
+
+                Form1.searchButton.Text = "Download";
+                
                 Program.searchingPlaylist = true;
 
 
@@ -145,7 +159,7 @@ namespace TrackTrek.UI
                 foreach (var video in videoInfos)
                 {
                     index++;
-                    ListViewItem listItem = null;
+                    ListViewItem listItem;
                     Form1.downloadProgress.Invoke(new MethodInvoker(() =>
                     {
                         Form1.downloadProgress.Value = 100;
@@ -159,31 +173,33 @@ namespace TrackTrek.UI
 
                     Form1.resultsList.Invoke(new MethodInvoker(() =>
                     {
-                        listItem = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
                     }));
                     byte[] resizedImage = video.AlbumImage;
                     MemoryStream imageStream = new MemoryStream(resizedImage);
                     Form1.resultsList.Invoke(new MethodInvoker(() =>
                     {
+                        listItem = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
                         Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
 
                         listItem.SubItems.Add(video.Title);
                         listItem.SubItems.Add(video.Artist);
                         listItem.SubItems.Add(video.Album);
                         listItem.SubItems.Add(Convert.ToBase64String(video.AlbumImage));
-                    }));
 
-                    Form1.resultsList.Invoke(new MethodInvoker(() =>
-                    {
                         Form1.resultsList.Items.Add(listItem);
                     }));
                 }
 
-
-                Form1.searchButton.Enabled = true;
+                Form1.searchButton.Invoke(new MethodInvoker(() =>
+                {
+                    Form1.searchButton.Enabled = true;
+                }));
             } else
             {
-                Form1.resultsList.Items.Clear();
+                Form1.resultsList.Invoke(new MethodInvoker(() =>
+                {
+                    Form1.resultsList.Items.Clear();
+                }));
                 HttpClient client = new HttpClient();
 
                 HttpResponseMessage httpResponse = await client.GetAsync($"https://itunes.apple.com/search?term={query}&entity=song");
@@ -194,33 +210,44 @@ namespace TrackTrek.UI
                 foreach (JsonObject item in responseJson)
                 {
                     index++;
-                    if (Form1.resultsList.SmallImageList == null)
+                    Form1.resultsList.Invoke(new MethodInvoker(() =>
                     {
-                        Form1.resultsList.SmallImageList = new ImageList();
-                        Form1.resultsList.SmallImageList.ImageSize = new Size(70, 70);
-                    }
+                        if (Form1.resultsList.SmallImageList == null)
+                        {
+                            Form1.resultsList.SmallImageList = new ImageList();
+                            Form1.resultsList.SmallImageList.ImageSize = new Size(70, 70);
+                        }
+                    }));
+                        
 
                     var imageUrl = item["artworkUrl100"].ToString();
-
-                    ListViewItem listItem = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
                     byte[] imageByte = await CustomMetaData.DownloadThumbnailAsBytes(imageUrl);
-                    byte[] resizedImage = ImageUtils.ResizeImage(imageByte);
-                    MemoryStream imageStream = new MemoryStream(resizedImage);
-                    Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
+                    Form1.resultsList.Invoke(new MethodInvoker(() =>
+                    {
+                        ListViewItem listItem = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
 
-                    listItem.SubItems.Add(item["trackName"].ToString());
-                    listItem.SubItems.Add(item["artistName"].ToString());
-                    listItem.SubItems.Add(item["collectionName"].ToString());
+                        byte[] resizedImage = ImageUtils.ResizeImage(imageByte);
+                        MemoryStream imageStream = new MemoryStream(resizedImage);
+                        Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
 
-                    // Here you can see I've removed duration it was NOT because I could do it, it did made the whole thing lag since I needed to request youtube for duration (ITunes does not support this)
+                        listItem.SubItems.Add(item["trackName"].ToString());
+                        listItem.SubItems.Add(item["artistName"].ToString());
+                        listItem.SubItems.Add(item["collectionName"].ToString());
 
-                    Form1.resultsList.Items.Add(listItem);
+                        Form1.resultsList.Items.Add(listItem);
+                    }));
+
+                    // Here you can see I've removed duration it was NOT because I could do it, it did made the whole thing was delaying since I needed to request youtube for duration (ITunes does not support this)
+
                     if (index >= Int32.Parse(Program.maxResults))
                     {
                         break;
                     }
                 }
-
+                Form1.searchButton.Invoke(new MethodInvoker(() =>
+                {
+                    Form1.searchButton.Text = "Download";
+                }));
             }
             base.OnClick(e);
         }

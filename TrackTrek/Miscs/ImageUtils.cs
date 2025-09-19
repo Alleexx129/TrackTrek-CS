@@ -52,7 +52,7 @@ namespace TrackTrek.Miscs
                     return imageNode?.GetAttributeValue("content", "") ?? "";
                 } catch (Exception ex)
                 {
-                    Sys.debug(ex);
+                    Sys.debug(ex.Message.ToString());
                 }
             }
             return "";

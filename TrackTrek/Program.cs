@@ -1,12 +1,13 @@
-﻿using System.Drawing;
+﻿using AngleSharp.Common;
+using System.Drawing;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using TrackTrek.Audio;
 using TrackTrek.Miscs;
 using TrackTrek.UI;
-using YoutubeExplode.Common;
 using YoutubeExplode;
-using AngleSharp.Common;
+using YoutubeExplode.Common;
 
 namespace TrackTrek
 {
@@ -59,7 +60,7 @@ namespace TrackTrek
             }
             catch (Exception e)
             {
-                Sys.debug(e.ToString());
+                Sys.debug(e.Message.ToString());
                 File.WriteAllText(Path.Combine(path1, DateTime.Today.ToString("yyyy-MM-dd") + "_error.txt"), e.ToString());
                 //MessageBox.Show("An unexpected error occurred: " + e.ToString());
             }
@@ -115,6 +116,19 @@ namespace TrackTrek
                 Sys.debug("Starting download...");
 
                 string output = await Download.EnqueueDownload(artist.Replace("/", "-"), title.Replace("/", "-"), videoInfo.Url, newItem);
+
+                Form1.downloadQueue.Invoke(new MethodInvoker(() =>
+                {
+                    if (newItem.SubItems[1].Text == "Error!")
+                    {
+                        Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                        {
+                            Form1.downloadProgress.Value = 100;
+                        }));
+                        return;
+                    }
+                }));
+                
 
                 Sys.debug("Audio downloaded!: " + output);
 

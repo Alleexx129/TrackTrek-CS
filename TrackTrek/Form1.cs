@@ -26,7 +26,7 @@ namespace TrackTrek
             }
             catch (Exception e)
             {
-                Sys.debug(e.ToString());
+                Sys.debug(e.Message.ToString());
                 File.WriteAllText(DateTime.Today.ToString("yyyy-MM-dd") + "_error.txt", e.ToString());
                 MessageBox.Show("An unexpected error occurred: " + e.ToString());
             }
