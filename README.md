@@ -13,7 +13,7 @@
 - **Artwork Download**: Includes album artwork for a complete listening experience.
 - **User-Friendly Search**: Quickly find the music you want by entering keywords related to the song or artist.
 
-### Install depencies
+### Install dependencies
 [.Net Desktop Runtime 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.14-windows-x64-installer)
 
 ## How to use?
