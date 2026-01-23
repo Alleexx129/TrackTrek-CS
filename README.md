@@ -1,11 +1,15 @@
-# This is an beta unstable version. Expect bugs and non-existent features that will be added in the near future, please report any [bugs here](https://github.com/Alleexx129/TrackTrek-CS/issues). Download Here [(Latest beta)]([https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v1.1.7-beta1](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v1.2.0-beta1))
+#TrackTrek
 
 ![Alt text](https://raw.githubusercontent.com/Alleexx129/Nyanko/refs/heads/main/logo.png "TrackTrek")
 
-# TrackTrek
+## Downloads
+[Latest beta](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v1.2.0-beta1)
 
 ## What is this?
-**TrackTrek** is a C# program that allows you to easily download your favorite music from Youtube. This tool retrieves audio tracks along with their metadata, including the title, artist, album information, and artwork. With a user-friendly interface, you can search for specific songs or artists and select from the top results to download high-quality audio files directly to your device.
+**TrackTrek** is a C# program that allows you to easily download your favorite music from Youtube. This tool retrieves audio tracks along with their metadata, including the title, artist, album information, artwork and lyrics. With a super simple interface, you can search for specific songs and select from the top results to download high-quality audio files directly to your device.
+
+## Issues
+Report them [here](https://github.com/Alleexx129/TrackTrek-CS/issues)
 
 ## Key Features:
 - **Download Music**: Obtain audio files in MP3 format for easy playback on any device.
@@ -23,7 +27,10 @@
 ## Dependencies (No installation required)
 - YoutubeExplode
 - TagLib
-- FFmpeg (installed automatically)
+- FFmpeg (edited)
+
+## Regarding Windows Defender detecting this as a virus
+The main reason to this being detected as a virus is that TrackTrek is not popular. Also, it was not signed using any certificates as these costs hundreds per year. TrackTrek will forever remain fully open-source, so you can compile this by yourself.
 
 ## Disclaimer
 **TrackTrek** is a tool designed to assist users in downloading music from online sources. By using this program, you acknowledge and agree that:
