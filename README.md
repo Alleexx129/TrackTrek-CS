@@ -12,10 +12,10 @@
 Report them [here](https://github.com/Alleexx129/TrackTrek-CS/issues)
 
 ## Key Features:
-- **Download Music**: Obtain audio files in MP3 format for easy playback on any device.
-- **Metadata Integration**: Automatically sets the title, artist, album, and genre tags for your downloaded tracks.
-- **Artwork Download**: Includes album artwork for a complete listening experience.
-- **User-Friendly Search**: Quickly find the music you want by entering keywords related to the song or artist.
+- **Download Music**: Obtain audio files in MP3 format using youtube links or keywords.
+- **Metadata Integration**: Automatically sets the title, artist, album and lyrics for your downloaded tracks without any API keys.
+- **Playlist Download**: You can download full youtube playlists easily by entering the link.
+- **User-Friendly Search**: Quickly find the music you want by entering keywords related to the song, artist or album. Quick, easy and simple to use.
 
 ### Install dependencies
 [.Net Desktop Runtime 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.14-windows-x64-installer)
