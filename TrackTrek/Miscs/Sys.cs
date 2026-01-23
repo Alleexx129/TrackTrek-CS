@@ -37,7 +37,7 @@ namespace TrackTrek.Miscs
                 } catch
                 {
                 }
-                exist += $"[{DateTime.Now.Hour.ToString()}:{DateTime.Now.Minute.ToString()}:{DateTime.Now.Second.ToString()}] {debugMessage}";
+                exist += $"[{DateTime.Now.Hour.ToString("D2")}:{DateTime.Now.Minute.ToString("D2")}:{DateTime.Now.Second.ToString("D2")}] {debugMessage}";
                 File.WriteAllText(Path.Combine(mainPath, DateTime.Today.ToString("yyyy-MM-dd") + "_debug.txt"), exist);
             }
         }

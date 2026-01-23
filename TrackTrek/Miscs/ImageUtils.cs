@@ -8,7 +8,7 @@ namespace TrackTrek.Miscs
         public static byte[] ResizeImage(byte[] imageBytes)
         {
             MemoryStream ms = new MemoryStream(imageBytes);
-            using (Image img = Image.FromStream(ms))
+            using (Image img = Image.FromStream(ms)) // need to filter the search results (the text filter)
             {
                 int width = img.Width;
                 int height = img.Height;
@@ -59,6 +59,11 @@ namespace TrackTrek.Miscs
         }
 
         public static async Task<string> GetAlbumImageUrl(string albumName, string artistName)
+        {
+            string albumUrl = $"https://www.last.fm/music/{artistName.Replace(" ", "+")}/{albumName.Replace(" ", "+")}/+images";
+            return albumUrl;
+        }
+        public static async Task<string> GetAlbumImage(string albumName, string artistName)
         {
             string albumUrl = $"https://www.last.fm/music/{artistName.Replace(" ", "+")}/{albumName.Replace(" ", "+")}/+images";
             return await GetAlbumImageFromSongPage(albumUrl);

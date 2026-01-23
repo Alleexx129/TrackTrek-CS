@@ -111,7 +111,7 @@ namespace TrackTrek
                     }));
                 }
 
-                YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title + " - " + artist);
+                YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title, artist);
 
                 Sys.debug("Starting download...");
 
@@ -132,11 +132,16 @@ namespace TrackTrek
 
                 Sys.debug("Audio downloaded!: " + output);
 
-                string albumImageUrl = await ImageUtils.GetAlbumImageUrl(album, artist);
+                string albumImage = await ImageUtils.GetAlbumImage(album, artist);
 
-                Sys.debug("Adding metadata: " + albumImageUrl);
+                Sys.debug("Adding album image: " + albumImage);
 
-                await CustomMetaData.Add(output, albumImageUrl, artist, title, album);
+                string geniusLink = Lyrics.ToGeniusLink(title, artist);
+                string lyrics = await Lyrics.GetLyrics(geniusLink);
+
+                Sys.debug("Adding lyrics: " + geniusLink);
+
+                await CustomMetaData.Add(output, albumImage, artist, title, lyrics, album);
 
                 Form1.downloadProgress.Invoke(new MethodInvoker(() =>
                 {

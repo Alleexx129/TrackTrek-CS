@@ -33,19 +33,59 @@ namespace TrackTrek.Miscs
             return ctype;
         }
 
-        public static async Task<Video> GetVideo(string query)
+        public static async Task<Video> GetVideo(string title, string artist)
         {
             YoutubeClient youtube = new YoutubeClient();
-            ISearchResult found = null;
+            VideoSearchResult? found = null;
+            byte bestRatio = 0;
+            byte index = 0;
+            
+            await foreach(VideoSearchResult video in youtube.Search.GetVideosAsync($"{title} / {artist}"))
+            {
+                VideoSearchResult foundVideo = video;
 
-            await foreach(var video in youtube.Search.GetResultsAsync(query)) {
-                if (!Filter.BlacklistedVideo(video.Title))
+                if (foundVideo.Title.Contains(" - "))
                 {
-                    found = video;
-                    break;
+                    foundVideo = new VideoSearchResult(video.Id, foundVideo.Title.Split(" - ")[1], new Author(video.Author.ChannelId, foundVideo.Title.Split(" - ")[0]), video.Duration, video.Thumbnails);
+                }
+                index += 1;
+
+                byte titleRatio = (byte)(Fuzz.Ratio(title, foundVideo.Title));
+                byte artistRatio = (byte)(Fuzz.PartialRatio(artist, foundVideo.Author.ToString()));
+
+                if (!Filter.BlacklistedVideo(foundVideo.Title))
+                {
+                    if (titleRatio >= 90 && artistRatio >= 30)
+                    {
+                        found = foundVideo;
+                        Sys.debug("Found video url:" + found.Url + " Title: " + found.Title.ToString() + " Author: " + found.Author.ToString() + " with accuracy of " + titleRatio + "%");
+                        break;
+                    }
+                    else if (bestRatio < titleRatio && artistRatio >= 30)
+                    {
+                        found = foundVideo;
+                        bestRatio = titleRatio;
+                    }
+                    if (index > 15)
+                    {
+                        if (found == null)
+                        {
+                            MessageBox.Show("Error no sound found in search results on yt");
+                            break;
+                        }
+                        Sys.debug("Found video url:" + found.Url + " Title: " + found.Title.ToString() + " Author: " + found.Author.ToString() + " with accuracy of " + bestRatio + "%");
+                        break;
+                    }
                 }
             }
-            return await youtube.Videos.GetAsync(found.Url);
+            if (found != null)
+            {
+                return await youtube.Videos.GetAsync(found.Url);
+            } else
+            {
+                MessageBox.Show("ERROR: AUDIO NOT FOUND ON YT");
+                return new Video(new VideoId("21"), "", new Author(new YoutubeExplode.Channels.ChannelId(), ""), new DateTimeOffset((long)1, new TimeSpan((long)3)), "", new TimeSpan(), (IReadOnlyList<Thumbnail>)(new List<Thumbnail>()), (IReadOnlyList<string>)(new List<string>()), new Engagement(67, 2, 2));
+            }
         }
         
         public class VideoInfo
@@ -79,30 +119,56 @@ namespace TrackTrek.Miscs
             {
                 httpResponse = await client.GetAsync($"https://itunes.apple.com/search?term={newVideoInfo.Title} by {newVideoInfo.Artist}&entity=song");
             }
+
             string response = await httpResponse.Content.ReadAsStringAsync();
             dynamic responseJson = JsonNode.Parse(response)["results"];
+
+            string bestArtist = "";
+            int bestArtistN = 0;
+            string bestTitle = "";
+            int bestTitleN = 0;
+            string bestAlbum = "";
 
             foreach (JsonObject item in responseJson)
             {
                 if (Filter.BlacklistedVideo(item["trackName"].ToString()))
                 {
+                    Sys.debug("skipped");
                     continue;
                 }
 
-                Sys.debug((Fuzz.PartialRatio(Filter.FilterArtistName(item["artistName"].ToString()), newVideoInfo.Artist.ToLower())).ToString());
-                if (Fuzz.PartialRatio(Filter.FilterArtistName(item["artistName"].ToString()), newVideoInfo.Artist.ToLower()) > 45 && Fuzz.PartialRatio(Filter.FilterArtistName(item["trackName"].ToString()), newVideoInfo.Title.ToLower()) > 45)
+                if (bestArtistN < Fuzz.Ratio(Filter.FilterArtistName(item["artistName"].ToString()), Filter.FilterArtistName(newVideoInfo.Artist.ToLower())))
+                {
+                    bestArtistN = Fuzz.Ratio(Filter.FilterArtistName(item["artistName"].ToString()), Filter.FilterArtistName(newVideoInfo.Artist.ToLower()));
+                    bestArtist = Filter.FilterArtistName(item["artistName"].ToString());
+                    Sys.debug("Detected artist: \"" + bestArtist + "\" Confidence " + bestArtistN + "%");
+                };
+
+                if (bestTitleN < Fuzz.Ratio(Filter.FilterTitle(item["trackName"].ToString()), Filter.FilterTitle(newVideoInfo.Title.ToLower())))
+                {
+                    bestTitle = Filter.FilterTitle(item["trackName"].ToString());
+                    bestAlbum = item["collectionName"].ToString();
+                    bestTitleN = Fuzz.Ratio(Filter.FilterTitle(item["trackName"].ToString()), Filter.FilterTitle(newVideoInfo.Title.ToLower()));
+                    Sys.debug("Detected title: \"" + bestTitle + "\" Confidence " + bestTitleN + "%");
+                    Sys.debug("Detected album: \"" + bestAlbum + "\"");
+                }
+
+                if (Fuzz.PartialRatio(Filter.FilterArtistName(item["artistName"].ToString()), Filter.FilterArtistName(newVideoInfo.Artist.ToLower())) > 80 && Fuzz.PartialRatio(Filter.FilterTitle(item["trackName"].ToString()), Filter.FilterTitle(newVideoInfo.Title.ToLower())) > 80)
                 {
                     newVideoInfo.Album = item["collectionName"].ToString();
-                    newVideoInfo.Title = item["trackName"].ToString();
-                    newVideoInfo.Artist = item["artistName"].ToString();
-                    string albumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist);
-
-                    newVideoInfo.AlbumImage = await CustomMetaData.DownloadThumbnailAsBytes(albumImage);
+                    newVideoInfo.Title = Filter.FilterTitle(item["trackName"].ToString());
+                    newVideoInfo.Artist = Filter.FilterArtistName(item["artistName"].ToString());;
 
                     break;
                 }
             }
 
+            newVideoInfo.Album = bestAlbum;
+            newVideoInfo.Title = bestTitle;
+            newVideoInfo.Artist = bestArtist;
+            string albumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist);
+
+            newVideoInfo.AlbumImage = await CustomMetaData.DownloadThumbnailAsBytes(albumImage);
             return newVideoInfo;
         }
         public static async Task<List<VideoInfo>> GetPlaylistVideos(string playlistUrl)

@@ -6,9 +6,34 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <PackageIcon>logo (1).png</PackageIcon>
+    <PackageIcon>logo.png</PackageIcon>
     <RepositoryUrl>https://github.com/Alleexx129/TrackTrek</RepositoryUrl>
     <ApplicationIcon>logo.ico</ApplicationIcon>
+    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+    <StartupObject></StartupObject>
+    <AssemblyTitle>TrackTrek</AssemblyTitle>
+    <GenerateDocumentationFile>False</GenerateDocumentationFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Copyright>https://github.com/Alleexx129/TrackTrek-CS/blob/master/LICENSE.txt</Copyright>
+    <Description>Install Tracktrek</Description>
+    <PackageProjectUrl>https://github.com/Alleexx129/TrackTrek-CS</PackageProjectUrl>
+    <PackageTags>Music; Download Music; mp3</PackageTags>
+    <PackageReleaseNotes>What's new?
+- Many bug fixes
+- Lyrics downloading
+
+Errors fixed include:
+- When downloading links, the album image looks like garbage, and did not download the album name
+- When searching, sometimes it glitches out and does not download
+- After downloading, sometimes it still got the live version / videoclip instead of the studio sound
+- After searching, the search button turns into "Download" even if it isn't a playlist
+- When downloading a playlist, sometimes it gets stuck
+- When downloading a playlist, most of the mp3 files don't have images, nor albums, if they have images they look garbage
+- The songs are 18+ on yt couldn't be downloaded, now you can put other copies of the song uploaded and it will still work even if the youtuber is not the actual artist
+- UI was not scaled when opening the program</PackageReleaseNotes>
+    <FileVersion>1.2.0</FileVersion>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,7 +41,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\..\Users\PC\Downloads\logo (1).png">
+    <None Include="..\..\..\..\Downloads\LICENSE.txt">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\..\..\Downloads\logo.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\..\..\Downloads\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
@@ -25,10 +58,10 @@
 
   <ItemGroup>
     <PackageReference Include="FuzzySharp" Version="2.0.2" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.12.0" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
     <PackageReference Include="MediaToolkit" Version="1.1.0.1" />
     <PackageReference Include="TagLibSharp" Version="2.3.0" />
-    <PackageReference Include="YoutubeExplode" Version="6.5.4" />
+    <PackageReference Include="YoutubeExplode" Version="6.5.6" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,6 +76,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="logo.ico">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

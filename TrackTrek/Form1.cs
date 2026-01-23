@@ -111,6 +111,7 @@ namespace TrackTrek
             };
             Program.add_controls(base.Controls, this.searchBox, Form1.searchButton, this.settingsButton, Form1.resultsList, Form1.downloadQueue, Form1.downloadProgress);
             base.Resize += this.Form1_Resize;
+            base.Load += this.Form1_Resize;
         }
 
         private void SearchButton_Click(object sender, EventArgs e)

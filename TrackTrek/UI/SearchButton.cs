@@ -22,6 +22,7 @@ using System.Text.Json.Nodes;
 using static MediaToolkit.Model.Metadata;
 using static TrackTrek.Miscs.Searching;
 using System.Buffers.Text;
+using HtmlAgilityPack;
 
 namespace TrackTrek.UI
 {
@@ -29,6 +30,9 @@ namespace TrackTrek.UI
     {
         protected override async void OnClick(EventArgs e)
         {
+            //string geniusLink = Lyrics.ToGeniusLink()
+            //var lyrics = await Lyrics.GetLyrics("https://genius.com/System-of-a-down-sugar-lyrics");
+
             Form1.downloadProgress.Value = 0;
             var youtube = new YoutubeClient();
 
@@ -45,7 +49,7 @@ namespace TrackTrek.UI
             
                 Sys.debug($"Starting download...");
 
-                string output = await Download.EnqueueDownload(videoInfo.Author.ToString(), videoInfo.Title.ToString(), query, newItem);
+                string output = await Download.EnqueueDownload(Filter.FilterArtistName(videoInfo.Author.ToString()), Filter.FilterTitle(videoInfo.Title.ToString()), query, newItem);
 
                 if (newItem.SubItems[1].Text == "Error!")
                 {
@@ -62,7 +66,13 @@ namespace TrackTrek.UI
 
                 Sys.debug($"Adding metadata: {thumbnail.Url} {videoInfo}");
 
-                await CustomMetaData.Add(output, thumbnail.Url, videoInfo.Author.ToString(), videoInfo.Title.ToString());
+                VideoInfo videoInfoFromITune = await Searching.FetchVideoInfos(videoInfo.Title.ToString(), videoInfo.Author.ToString(), new byte[0]);
+
+
+                string geniusLink = Lyrics.ToGeniusLink(videoInfoFromITune.Title.ToString(), videoInfoFromITune.Artist.ToString());
+                var lyrics = await Lyrics.GetLyrics(geniusLink);
+
+                await CustomMetaData.Add(output, await ImageUtils.GetAlbumImage(videoInfoFromITune.Album.ToString(), videoInfoFromITune.Artist.ToString()), videoInfoFromITune.Artist.ToString(), videoInfoFromITune.Title.ToString(), lyrics, videoInfoFromITune.Album.ToString());
 
                 Form1.downloadProgress.Invoke(new MethodInvoker(() =>
                 {
@@ -97,7 +107,7 @@ namespace TrackTrek.UI
                                 Form1.downloadQueue.Items.Add(newItem);
                             }));
 
-                            YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title + " - " + artist);
+                            YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title, artist);
 
                             Sys.debug("Starting download...");
 
@@ -116,7 +126,11 @@ namespace TrackTrek.UI
                                 
                             Sys.debug("Audio downloaded!: " + output);
 
-                            await CustomMetaData.Add(output, Convert.FromBase64String(resultItem.SubItems[4].Text), artist, title, album);
+
+                            string geniusLink = Lyrics.ToGeniusLink(title, artist);
+                            var lyrics = await Lyrics.GetLyrics(geniusLink);
+
+                            await CustomMetaData.Add(output, Convert.FromBase64String(resultItem.SubItems[4].Text), artist, title, lyrics, album);
 
 
                             Form1.downloadProgress.Invoke(new MethodInvoker(() =>
@@ -230,7 +244,7 @@ namespace TrackTrek.UI
                         MemoryStream imageStream = new MemoryStream(resizedImage);
                         Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
 
-                        listItem.SubItems.Add(item["trackName"].ToString());
+                        listItem.SubItems.Add(Filter.FilterTitle(item["trackName"].ToString()));
                         listItem.SubItems.Add(item["artistName"].ToString());
                         listItem.SubItems.Add(item["collectionName"].ToString());
 
@@ -244,10 +258,6 @@ namespace TrackTrek.UI
                         break;
                     }
                 }
-                Form1.searchButton.Invoke(new MethodInvoker(() =>
-                {
-                    Form1.searchButton.Text = "Download";
-                }));
             }
             base.OnClick(e);
         }
