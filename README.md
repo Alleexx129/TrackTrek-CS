@@ -22,7 +22,7 @@ Report them [here](https://github.com/Alleexx129/TrackTrek-CS/issues)
 
 ## How to use?
 - Enter youtube link, keyword or a youtube playlist
-- Choose between multiple search results when searching with keywords. You can edit the maximum of search results in the settings.
+- Choose between 5 first searches if you select with keywords, the settings for max results are customizable.
 
 ## Dependencies (No installation required)
 - YoutubeExplode

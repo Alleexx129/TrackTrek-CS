@@ -133,7 +133,7 @@ namespace TrackTrek.Audio
             }
 
             Stream stream = await youtube.Videos.Streams.GetAsync(streamInfo);
-            string name = title + " - " + Filter.FilterArtistName(artist);
+            string name = title + " - " + Filter.FilterArtistName(artist).toCapitalFirst();
 
             Sys.debug($"Step 2 Download");
 

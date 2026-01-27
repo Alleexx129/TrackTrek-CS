@@ -107,7 +107,7 @@ namespace TrackTrek.UI
                                 Form1.downloadQueue.Items.Add(newItem);
                             }));
 
-                            YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title, artist);
+                            YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title, artist, album);
 
                             Sys.debug("Starting download...");
 
@@ -130,7 +130,7 @@ namespace TrackTrek.UI
                             string geniusLink = Lyrics.ToGeniusLink(title, artist);
                             var lyrics = await Lyrics.GetLyrics(geniusLink);
 
-                            await CustomMetaData.Add(output, Convert.FromBase64String(resultItem.SubItems[4].Text), artist, title, lyrics, album);
+                            await CustomMetaData.Add(output, Convert.FromBase64String(resultItem.SubItems[4].Text), artist.toCapitalFirst(), title, lyrics, album);
 
 
                             Form1.downloadProgress.Invoke(new MethodInvoker(() =>

@@ -12,7 +12,7 @@ namespace TrackTrek.Miscs
     internal class Filter
     {
         private static List<string> blacklistedVideoKeywords = new List<string> { "Official HD Video", "Official Video", "】", "(Live", "( 4K Video)" }; // The program will ignore any video with these (Some live videos don't have the exact same sound as studio quality)
-        private static List<string> deletedVideoKeywords = new List<string> { "HD", "lyrics", "Lyrics", "Official", "official", "(Clean Version)", "(Live)", "(Official Audio)", "(Remastered)", "(HQ)", "(  Video)", "( Audio)", "(Audio)", "[HQ]", "[Official Music Video]", "[Extended]", "[LYRICS]", "(Official Video)", "(official video)", "(Video Edit)", "( Video)", "( 4K Video)", "( Lyric Video)", "( Lyrics Video)" }; // The program will acccept videos with these keywords, but will delete these keywords in the title
+        private static List<string> deletedVideoKeywords = new List<string> { "(Deluxe Edition)", "HD", "lyrics", "Lyrics", "Official", "official", "(Clean Version)", "(Live)", "(Official Audio)", "(Remastered)", "(HQ)", "(  Video)", "( Audio)", "(Audio)", "[HQ]", "[Official Music Video]", "[Extended]", "[LYRICS]", "(Official Video)", "(official video)", "(Video Edit)", "( Video)", "( 4K Video)", "( Lyric Video)", "( Lyrics Video)" }; // The program will acccept videos with these keywords, but will delete these keywords in the title
 
         public static string FilterArtistName(string artistName)
         {
@@ -22,7 +22,7 @@ namespace TrackTrek.Miscs
 
         public static Boolean BlacklistedVideo(string title)
         {
-            return false;
+            return blacklistedVideoKeywords.Any(title.Contains);
         }
 
         public static string FilterTitle(string title)

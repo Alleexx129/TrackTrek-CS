@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CodeDom.Compiler;
 using System.Collections;
+using System.Collections.Frozen;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Nodes;
@@ -12,6 +13,8 @@ using YoutubeExplode;
 using YoutubeExplode.Common;
 using YoutubeExplode.Search;
 using YoutubeExplode.Videos;
+
+// clean this sometime soon
 
 namespace TrackTrek.Miscs
 {
@@ -33,38 +36,55 @@ namespace TrackTrek.Miscs
             return ctype;
         }
 
-        public static async Task<Video> GetVideo(string title, string artist)
+        public static async Task<Video> GetVideo(string title, string artist, string album)
         {
             YoutubeClient youtube = new YoutubeClient();
             VideoSearchResult? found = null;
             byte bestRatio = 0;
             byte index = 0;
-            
+
             await foreach(VideoSearchResult video in youtube.Search.GetVideosAsync($"{title} / {artist}"))
             {
                 VideoSearchResult foundVideo = video;
+                VideoSearchResult foundVideo2 = video;
 
                 if (foundVideo.Title.Contains(" - "))
                 {
-                    foundVideo = new VideoSearchResult(video.Id, foundVideo.Title.Split(" - ")[1], new Author(video.Author.ChannelId, foundVideo.Title.Split(" - ")[0]), video.Duration, video.Thumbnails);
+                    FrozenSet<string> dividedTitle = foundVideo.Title.Split(" - ").ToFrozenSet();
+                    
+                    foundVideo = new VideoSearchResult(video.Id, dividedTitle.Last().ToLower().Replace("("+album.ToLower()+")", ""), new Author(video.Author.ChannelId, dividedTitle.First().ToLower().Replace("("+album.ToLower()+")", "")), video.Duration, video.Thumbnails);
+                    foundVideo2 = new VideoSearchResult(video.Id, dividedTitle.First().ToLower().Replace("(" + album.ToLower() + ")", ""), new Author(video.Author.ChannelId, dividedTitle.Last().ToLower().Replace("(" + album.ToLower() + ")", "")), video.Duration, video.Thumbnails);
+                    
                 }
                 index += 1;
 
-                byte titleRatio = (byte)(Fuzz.Ratio(title, foundVideo.Title));
-                byte artistRatio = (byte)(Fuzz.PartialRatio(artist, foundVideo.Author.ToString()));
+                byte titleRatio = (byte)(Fuzz.Ratio(title.ToLower(), foundVideo.Title.ToLower().Replace("("+album.ToLower()+")", "")));
+                byte artistRatio = (byte)(Fuzz.Ratio(artist.ToLower(), foundVideo.Author.ToString().ToLower()));
+                byte titleRatio2 = (byte)(Fuzz.Ratio(title.ToLower(), foundVideo2.Title.ToLower().Replace("(" + album.ToLower() + ")", "")));
+                byte artistRatio2 = (byte)(Fuzz.Ratio(artist.ToLower(), foundVideo2.Author.ToString().ToLower()));
 
                 if (!Filter.BlacklistedVideo(foundVideo.Title))
                 {
+                    Sys.debug(foundVideo.Title);
                     if (titleRatio >= 90 && artistRatio >= 30)
                     {
                         found = foundVideo;
-                        Sys.debug("Found video url:" + found.Url + " Title: " + found.Title.ToString() + " Author: " + found.Author.ToString() + " with accuracy of " + titleRatio + "%");
+                        Sys.debug("Found video url: " + found.Url + " Title: " + found.Title.ToString() + " Author: " + found.Author.ToString() + " with accuracy of " + titleRatio + "%");
+                        break;
+                    } else if (titleRatio2 >= 90 && artistRatio2 >= 30)
+                    {
+                        found = foundVideo2;
+                        Sys.debug("Found video url: " + found.Url + " Title: " + found.Title.ToString() + " Author: " + found.Author.ToString() + " with accuracy of " + titleRatio2 + "%");
                         break;
                     }
                     else if (bestRatio < titleRatio && artistRatio >= 30)
                     {
                         found = foundVideo;
                         bestRatio = titleRatio;
+                    } else if (bestRatio < titleRatio2 && artistRatio2 >= 30)
+                    {
+                        found = foundVideo;
+                        bestRatio = titleRatio2;
                     }
                     if (index > 15)
                     {
@@ -76,7 +96,7 @@ namespace TrackTrek.Miscs
                         Sys.debug("Found video url:" + found.Url + " Title: " + found.Title.ToString() + " Author: " + found.Author.ToString() + " with accuracy of " + bestRatio + "%");
                         break;
                     }
-                }
+                } else { MessageBox.Show(foundVideo.Title); }
             }
             if (found != null)
             {
@@ -153,7 +173,7 @@ namespace TrackTrek.Miscs
                     Sys.debug("Detected album: \"" + bestAlbum + "\"");
                 }
 
-                if (Fuzz.PartialRatio(Filter.FilterArtistName(item["artistName"].ToString()), Filter.FilterArtistName(newVideoInfo.Artist.ToLower())) > 80 && Fuzz.PartialRatio(Filter.FilterTitle(item["trackName"].ToString()), Filter.FilterTitle(newVideoInfo.Title.ToLower())) > 80)
+                if (Fuzz.Ratio(Filter.FilterArtistName(item["artistName"].ToString()), Filter.FilterArtistName(newVideoInfo.Artist.ToLower())) > 80 && Fuzz.Ratio(Filter.FilterTitle(item["trackName"].ToString()), Filter.FilterTitle(newVideoInfo.Title.ToLower())) > 80)
                 {
                     newVideoInfo.Album = item["collectionName"].ToString();
                     newVideoInfo.Title = Filter.FilterTitle(item["trackName"].ToString());
@@ -165,7 +185,7 @@ namespace TrackTrek.Miscs
 
             newVideoInfo.Album = bestAlbum;
             newVideoInfo.Title = bestTitle;
-            newVideoInfo.Artist = bestArtist;
+            newVideoInfo.Artist = bestArtist.toCapitalFirst();
             string albumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist);
 
             newVideoInfo.AlbumImage = await CustomMetaData.DownloadThumbnailAsBytes(albumImage);

@@ -62,7 +62,7 @@ namespace TrackTrek
             {
                 Sys.debug(e.Message.ToString());
                 File.WriteAllText(Path.Combine(path1, DateTime.Today.ToString("yyyy-MM-dd") + "_error.txt"), e.ToString());
-                //MessageBox.Show("An unexpected error occurred: " + e.ToString());
+                MessageBox.Show("An unexpected error occurred: " + e.ToString());
             }
             ;
 
@@ -111,7 +111,7 @@ namespace TrackTrek
                     }));
                 }
 
-                YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title, artist);
+                YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title, artist, album);
 
                 Sys.debug("Starting download...");
 
@@ -141,7 +141,7 @@ namespace TrackTrek
 
                 Sys.debug("Adding lyrics: " + geniusLink);
 
-                await CustomMetaData.Add(output, albumImage, artist, title, lyrics, album);
+                await CustomMetaData.Add(output, albumImage, artist.toCapitalFirst(), title, lyrics, album);
 
                 Form1.downloadProgress.Invoke(new MethodInvoker(() =>
                 {

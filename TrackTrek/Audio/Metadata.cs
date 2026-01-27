@@ -25,7 +25,7 @@ namespace TrackTrek.Audio
                 };
 
             file.Tag.Pictures = new TagLib.IPicture[] { picture };
-            file.Tag.Performers = new string[] { Filter.FilterArtistName(artist) };
+            file.Tag.Performers = new string[] { Filter.FilterArtistName(artist).toCapitalFirst() };
             file.Tag.Title = title;
             file.Tag.Album = albumName;
             file.Tag.Lyrics = lyrics;
