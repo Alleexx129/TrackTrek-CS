@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FuzzySharp;
+using System;
 using System.CodeDom.Compiler;
 using System.Collections;
 using System.Collections.Frozen;
@@ -7,12 +8,12 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using FuzzySharp;
 using TrackTrek.Audio;
 using YoutubeExplode;
 using YoutubeExplode.Common;
 using YoutubeExplode.Search;
 using YoutubeExplode.Videos;
+using static MediaToolkit.Model.Metadata;
 
 // clean this sometime soon
 
@@ -36,7 +37,7 @@ namespace TrackTrek.Miscs
             return ctype;
         }
 
-        public static async Task<Video> GetVideo(string title, string artist, string album)
+        public static async Task<YoutubeExplode.Videos.Video> GetVideo(string title, string artist, string album)
         {
             YoutubeClient youtube = new YoutubeClient();
             VideoSearchResult? found = null;
@@ -104,7 +105,7 @@ namespace TrackTrek.Miscs
             } else
             {
                 MessageBox.Show("ERROR: AUDIO NOT FOUND ON YT");
-                return new Video(new VideoId("21"), "", new Author(new YoutubeExplode.Channels.ChannelId(), ""), new DateTimeOffset((long)1, new TimeSpan((long)3)), "", new TimeSpan(), (IReadOnlyList<Thumbnail>)(new List<Thumbnail>()), (IReadOnlyList<string>)(new List<string>()), new Engagement(67, 2, 2));
+                return new YoutubeExplode.Videos.Video(new VideoId("21"), "", new Author(new YoutubeExplode.Channels.ChannelId(), ""), new DateTimeOffset((long)1, new TimeSpan((long)3)), "", new TimeSpan(), (IReadOnlyList<Thumbnail>)(new List<Thumbnail>()), (IReadOnlyList<string>)(new List<string>()), new Engagement(67, 2, 2));
             }
         }
         
@@ -123,7 +124,7 @@ namespace TrackTrek.Miscs
             public string Album { get; set; }
         }
 
-        public static async Task<VideoInfo> FetchVideoInfos(string title, string uploader, byte[] thumbnail)
+        public static async Task<VideoInfo> FetchVideoInfos(string title, string uploader, byte[] thumbnail, bool bypass = false)
         {
             VideoInfo newVideoInfo = new VideoInfo{ Title = "", Artist = "", AlbumImage = thumbnail, Album = "Unknown", };
 
@@ -151,7 +152,7 @@ namespace TrackTrek.Miscs
 
             foreach (JsonObject item in responseJson)
             {
-                if (Filter.BlacklistedVideo(item["trackName"].ToString()))
+                if (Filter.BlacklistedVideo(item["trackName"].ToString()) && bypass == false)
                 {
                     Sys.debug("skipped");
                     continue;
@@ -183,13 +184,26 @@ namespace TrackTrek.Miscs
                 }
             }
 
+            if (bestTitleN < 15)
+            {
+                return new VideoInfo();
+            }
+
             newVideoInfo.Album = bestAlbum;
             newVideoInfo.Title = bestTitle;
             newVideoInfo.Artist = bestArtist.toCapitalFirst();
-            string albumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist);
-
+            if (newVideoInfo.Album == "Unknown")
+            {
+                newVideoInfo.AlbumImage = thumbnail; newVideoInfo.Album = "Youtube"; newVideoInfo.Title = title; newVideoInfo.Artist = uploader;
+                return newVideoInfo;
+            }
+            string? albumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist);
             newVideoInfo.AlbumImage = await CustomMetaData.DownloadThumbnailAsBytes(albumImage);
-            return newVideoInfo;
+            try
+            {
+                newVideoInfo.AlbumImage = await CustomMetaData.DownloadThumbnailAsBytes(albumImage);
+            } catch { newVideoInfo.AlbumImage = thumbnail; newVideoInfo.Album = "Youtube"; newVideoInfo.Title = title; newVideoInfo.Artist = uploader; }
+                return newVideoInfo;
         }
         public static async Task<List<VideoInfo>> GetPlaylistVideos(string playlistUrl)
         {
@@ -209,15 +223,22 @@ namespace TrackTrek.Miscs
                 Form1.downloadProgress.Value = index * 100 / await countTask;
                 string title = video.Title;
                 string author = video.Author.ToString();
-                byte[] imageByte = await CustomMetaData.DownloadThumbnailAsBytes(video.Thumbnails[video.Thumbnails.Count - 1].Url);
-                byte[] resizedImage = ImageUtils.ResizeImage(imageByte);
+                byte[]? imageByte = null;
+                byte[]? resizedImage = null;
 
-                VideoInfo videoInfo = await FetchVideoInfos(title, author, resizedImage);
-                if (videoInfo.Artist != string.Empty)
+                VideoInfo videoInfo = await FetchVideoInfos(title, author, resizedImage, true);
+                if (videoInfo.Album == "Unknown" || videoInfo.Album == "Youtube" || videoInfo.Album == string.Empty)
                 {
-                    videoInfos.Add(videoInfo);
+                    imageByte = await CustomMetaData.DownloadThumbnailAsBytes(video.Thumbnails[video.Thumbnails.Count - 1].Url);
+                    resizedImage = ImageUtils.ResizeImage(imageByte);
+
+                    videoInfo.Album = "Youtube";
+                    videoInfo.AlbumImage = resizedImage;
+                    videoInfo.Title = title;
+                    videoInfo.Artist = author;
                 }
-                Sys.debug($"Artist: {videoInfo.Artist} Title: {videoInfo.Title} Album: {videoInfo.Album}");
+                videoInfos.Add(videoInfo);
+                Sys.debug($"Added to playlist infos: Artist: {videoInfo.Artist} Title: {videoInfo.Title} Album: {videoInfo.Album}");
             }
 
             return videoInfos;

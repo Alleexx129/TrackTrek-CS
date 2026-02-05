@@ -1,28 +1,30 @@
-﻿using System;
+﻿using AngleSharp.Common;
+using AngleSharp.Media;
+using HtmlAgilityPack;
+using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using TrackTrek.Audio;
+using TrackTrek.Miscs;
 using YoutubeExplode;
+using YoutubeExplode.Common;
+using YoutubeExplode.Exceptions;
+using YoutubeExplode.Search;
 using YoutubeExplode.Videos;
 using YoutubeExplode.Videos.Streams;
-using TrackTrek.Audio;
-using YoutubeExplode.Common;
-using System.IO;
-using System.Xml.Linq;
-using TrackTrek.Miscs;
-using YoutubeExplode.Search;
-using AngleSharp.Media;
-using AngleSharp.Common;
-using System.ComponentModel;
-using System.Reflection.Metadata;
-using System.Text.Json.Serialization;
-using System.Text.Json.Nodes;
 using static MediaToolkit.Model.Metadata;
 using static TrackTrek.Miscs.Searching;
-using System.Buffers.Text;
-using HtmlAgilityPack;
 
 namespace TrackTrek.UI
 {
@@ -46,7 +48,7 @@ namespace TrackTrek.UI
                 Form1.downloadQueue.Items.Add(newItem);
 
                 YoutubeExplode.Videos.Video videoInfo = await youtube.Videos.GetAsync(query);
-            
+
                 Sys.debug($"Starting download...");
 
                 string output = await Download.EnqueueDownload(Filter.FilterArtistName(videoInfo.Author.ToString()), Filter.FilterTitle(videoInfo.Title.ToString()), query, newItem);
@@ -87,13 +89,12 @@ namespace TrackTrek.UI
                     {
                         Form1.searchButton.Enabled = false;
                     }));
-                    foreach (ListViewItem item in Form1.resultsList.Items)
+                    Task processTask = Task.Run(async () =>
                     {
-                        TaskCompletionSource<bool> taskCompletionSource = new TaskCompletionSource<bool>();
-                        await Task.Delay(100);
-
-                        Task processTask = Task.Run(async () =>
+                        foreach (ListViewItem item in Form1.resultsList.Items)
                         {
+                            TaskCompletionSource<bool> taskCompletionSource = new TaskCompletionSource<bool>();
+                            await Task.Delay(100);
                             ListViewItem resultItem = item;
                             ListViewItem newItem = new ListViewItem("Loading...");
 
@@ -109,6 +110,7 @@ namespace TrackTrek.UI
 
                             YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title, artist, album);
 
+
                             Sys.debug("Starting download...");
 
                             string output = await Download.EnqueueDownload(artist.Replace("/", "-"), title.Replace("/", "-"), videoInfo.Url, newItem);
@@ -123,14 +125,23 @@ namespace TrackTrek.UI
                                 }
 
                             }));
-                                
+
                             Sys.debug("Audio downloaded!: " + output);
 
+                            if (album != "Youtube")
+                            {
+                                string geniusLink = Lyrics.ToGeniusLink(title, artist);
+                                var lyrics = await Lyrics.GetLyrics(geniusLink);
 
-                            string geniusLink = Lyrics.ToGeniusLink(title, artist);
-                            var lyrics = await Lyrics.GetLyrics(geniusLink);
+                                await CustomMetaData.Add(output, Convert.FromBase64String(resultItem.SubItems[4].Text), artist.toCapitalFirst(), title, lyrics, album);
+                            }
+                            else
+                            {
+                                byte[] imageByte = await CustomMetaData.DownloadThumbnailAsBytes(videoInfo.Thumbnails[videoInfo.Thumbnails.Count - 1].Url);
+                                byte[] resizedImage = ImageUtils.ResizeImage(imageByte);
+                                await CustomMetaData.Add(output, resizedImage, artist.toCapitalFirst(), title, "Unknown", album);
+                            }
 
-                            await CustomMetaData.Add(output, Convert.FromBase64String(resultItem.SubItems[4].Text), artist.toCapitalFirst(), title, lyrics, album);
 
 
                             Form1.downloadProgress.Invoke(new MethodInvoker(() =>
@@ -138,16 +149,20 @@ namespace TrackTrek.UI
                                 Form1.downloadProgress.Value = 100;
                             }));
                             taskCompletionSource.SetResult(true);
-                        });
-                        /*
-                        bool isDone = await Task.WhenAny(taskCompletionSource.Task, Task.Delay(15000)) == taskCompletionSource.Task;
-
-                        if (!isDone)
-                        {
-                            Sys.debug("Couldn't download: Timeout");
                         }
-                        */
+                    });
+
+
+
+                    /*
+                    bool isDone = await Task.WhenAny(taskCompletionSource.Task, Task.Delay(15000)) == taskCompletionSource.Task;
+
+                    if (!isDone)
+                    {
+                        Sys.debug("Couldn't download: Timeout");
                     }
+                    */
+
                     Form1.searchButton.Invoke(new MethodInvoker(() =>
                     {
                         Form1.searchButton.Text = "Search";
@@ -158,7 +173,7 @@ namespace TrackTrek.UI
                 }
 
                 Form1.searchButton.Text = "Download";
-                
+
                 Program.searchingPlaylist = true;
 
 
@@ -170,6 +185,7 @@ namespace TrackTrek.UI
                 {
                     Form1.resultsList.Items.Clear();
                 }));
+
                 foreach (var video in videoInfos)
                 {
                     index++;
@@ -178,21 +194,24 @@ namespace TrackTrek.UI
                     {
                         Form1.downloadProgress.Value = 100;
                     }));
-                    
+
                     if (Form1.resultsList.SmallImageList == null)
                     {
                         Form1.resultsList.SmallImageList = new ImageList();
                         Form1.resultsList.SmallImageList.ImageSize = new Size(70, 70);
                     }
 
-                    Form1.resultsList.Invoke(new MethodInvoker(() =>
-                    {
-                    }));
+                    Bitmap bitmap;
                     byte[] resizedImage = video.AlbumImage;
-                    MemoryStream imageStream = new MemoryStream(resizedImage);
+
+                    string header = BitConverter.ToString(resizedImage.Take(12).ToArray());
+
+                    Stream imageStream = new MemoryStream(resizedImage);
+
                     Form1.resultsList.Invoke(new MethodInvoker(() =>
                     {
                         listItem = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
+
                         Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
 
                         listItem.SubItems.Add(video.Title);
@@ -208,7 +227,8 @@ namespace TrackTrek.UI
                 {
                     Form1.searchButton.Enabled = true;
                 }));
-            } else
+            }
+            else
             {
                 Form1.resultsList.Invoke(new MethodInvoker(() =>
                 {
@@ -232,7 +252,7 @@ namespace TrackTrek.UI
                             Form1.resultsList.SmallImageList.ImageSize = new Size(70, 70);
                         }
                     }));
-                        
+
 
                     var imageUrl = item["artworkUrl100"].ToString();
                     byte[] imageByte = await CustomMetaData.DownloadThumbnailAsBytes(imageUrl);
