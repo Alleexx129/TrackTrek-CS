@@ -1,21 +1,20 @@
-# TrackTrek
+This is currently broken due to YoutubeExplode library being outdated, a fix will be implemented within a few days.
+I might also switch to another library soon after.
+
+# This is an beta unstable version. Expect bugs and non-existent features that will be added in the near future, please report any [bugs here](https://github.com/Alleexx129/TrackTrek-CS/issues). Download Here [(Latest beta)](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v1.1.7-beta1)
 
 ![Alt text](https://raw.githubusercontent.com/Alleexx129/Nyanko/refs/heads/main/logo.png "TrackTrek")
 
-## Downloads
-[Latest beta](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v1.2.0-beta1)
+# TrackTrek
 
 ## What is this?
-**TrackTrek** is a C# program that allows you to easily download your favorite music from Youtube. This tool retrieves audio tracks along with their metadata, including the title, artist, album information, artwork and lyrics. With a super simple interface, you can search for specific songs and select from the top results to download high-quality audio files directly to your device.
-
-## Issues
-Report them [here](https://github.com/Alleexx129/TrackTrek-CS/issues)
+**TrackTrek** is a C# program that allows you to easily download your favorite music from Youtube. This tool retrieves audio tracks along with their metadata, including the title, artist, album information, and artwork. With a user-friendly interface, you can search for specific songs or artists and select from the top results to download high-quality audio files directly to your device.
 
 ## Key Features:
-- **Download Music**: Obtain audio files in MP3 format using youtube links or keywords.
-- **Metadata Integration**: Automatically sets the title, artist, album and lyrics for your downloaded tracks without any API keys.
-- **Playlist Download**: You can download full youtube playlists easily by entering the link.
-- **User-Friendly Search**: Quickly find the music you want by entering keywords related to the song, artist or album. Quick, easy and simple to use.
+- **Download Music**: Obtain audio files in MP3 format for easy playback on any device.
+- **Metadata Integration**: Automatically sets the title, artist, album, and genre tags for your downloaded tracks.
+- **Artwork Download**: Includes album artwork for a complete listening experience.
+- **User-Friendly Search**: Quickly find the music you want by entering keywords related to the song or artist.
 
 ### Install dependencies
 [.Net Desktop Runtime 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.14-windows-x64-installer)
@@ -27,10 +26,7 @@ Report them [here](https://github.com/Alleexx129/TrackTrek-CS/issues)
 ## Dependencies (No installation required)
 - YoutubeExplode
 - TagLib
-- FFmpeg (edited)
-
-## Regarding Windows Defender detecting this as a virus
-The main reason to this being detected as a virus is that TrackTrek is not popular. Also, it was not signed using any certificates as these costs hundreds per year. TrackTrek will forever remain fully open-source, so you can compile this by yourself.
+- FFmpeg (installed automatically)
 
 ## Disclaimer
 **TrackTrek** is a tool designed to assist users in downloading music from online sources. By using this program, you acknowledge and agree that:
