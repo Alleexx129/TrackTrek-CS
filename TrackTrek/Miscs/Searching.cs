@@ -97,7 +97,7 @@ namespace TrackTrek.Miscs
                         Sys.debug("Found video url:" + found.Url + " Title: " + found.Title.ToString() + " Author: " + found.Author.ToString() + " with accuracy of " + bestRatio + "%");
                         break;
                     }
-                } else { MessageBox.Show(foundVideo.Title); }
+                } else {  }
             }
             if (found != null)
             {
@@ -237,6 +237,7 @@ namespace TrackTrek.Miscs
                     videoInfo.Title = title;
                     videoInfo.Artist = author;
                 }
+
                 videoInfos.Add(videoInfo);
                 Sys.debug($"Added to playlist infos: Artist: {videoInfo.Artist} Title: {videoInfo.Title} Album: {videoInfo.Album}");
             }

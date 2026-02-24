@@ -52,7 +52,21 @@ namespace TrackTrek.Audio
                 {
                     using (HttpClient client = new HttpClient())
                     {
-                        var html = await client.GetStringAsync(videoUrl);
+                        string html;
+                        try
+                        {
+                            html = await client.GetStringAsync(videoUrl);
+                        } catch (Exception)
+                        {
+                            await Task.Delay(2000);
+                            try
+                            {
+                                html = await client.GetStringAsync(videoUrl);
+                            } catch (Exception)
+                            {
+                                return new byte[0];
+                            }
+                        }
                         var doc = new HtmlAgilityPack.HtmlDocument();
                         doc.LoadHtml(html);
 

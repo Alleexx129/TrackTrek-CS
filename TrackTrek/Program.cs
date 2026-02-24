@@ -33,7 +33,6 @@ namespace TrackTrek
                 Program.debug = jsonNode["debug"].GetValue<bool>();
                 if (!jsonNode.AsObject().ContainsKey("customPath"))
                 {
-                    MessageBox.Show("test");
                     jsonNode["customPath"] = Program.customPath;
                     File.WriteAllText(path, jsonNode.ToJsonString());
                 }
@@ -136,8 +135,13 @@ namespace TrackTrek
 
                 Sys.debug("Adding album image: " + albumImage);
 
-                string geniusLink = Lyrics.ToGeniusLink(title, artist);
-                string lyrics = await Lyrics.GetLyrics(geniusLink);
+                string lyrics = "";
+                string geniusLink = "Youtube Video";
+                if (album != "Youtube")
+                {
+                    geniusLink = Lyrics.ToGeniusLink(title, artist);
+                    lyrics = await Lyrics.GetLyrics(geniusLink);
+                }
 
                 Sys.debug("Adding lyrics: " + geniusLink);
 
