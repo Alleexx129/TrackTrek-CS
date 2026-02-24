@@ -1,4 +1,7 @@
-﻿using System;
+﻿using AngleSharp.Media;
+using MediaToolkit;
+using MediaToolkit.Model;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,14 +11,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
-using AngleSharp.Media;
-using MediaToolkit;
-using MediaToolkit.Model;
 using TrackTrek.Miscs;
 using TrackTrek.UI;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
 using static TrackTrek.Miscs.Searching;
+
+
 
 namespace TrackTrek.Audio
 {
@@ -55,8 +57,9 @@ namespace TrackTrek.Audio
 
                 var outputTask = process.StandardOutput.ReadToEndAsync();
                 var errorTask = process.StandardError.ReadToEndAsync();
-                var waitTask = process.WaitForExitAsync();
 
+                await process.WaitForExitAsync();
+                
                 string output = await outputTask;
                 string error = await errorTask;
 
@@ -70,10 +73,12 @@ namespace TrackTrek.Audio
                 {
                     Form1.downloadProgress.Value = 80;
                 }));
+
                 if (File.Exists(path))
                 {
                     File.Delete(path);
                 }
+
                 Form1.downloadProgress.Invoke(new MethodInvoker(() =>
                 {
                     item.SubItems[1].Text = "Completed!";
@@ -91,6 +96,7 @@ namespace TrackTrek.Audio
             {
                 // function not used :( 
                 // Will delete in the future
+                // meh maybe ill use it when I rewrite the code
             }
             return "";
         }

@@ -35,13 +35,15 @@ namespace TrackTrek.Audio
 
         public static async Task<byte[]> DownloadThumbnailAsBytes(object url)
         {
-            Sys.debug(url);
+            
             if (url is byte[] byteArray)
             {
+                Sys.debug("Image is byte array of " + byteArray.Length.ToString() + "Characters");
                 return byteArray;
             }
             else if (url is string videoUrl)
             {
+                Sys.debug(videoUrl);
                 if (videoUrl.EndsWith(".png") || videoUrl.EndsWith(".jpg") || videoUrl.EndsWith(".webp"))
                 {
                     using (HttpClient client = new HttpClient())
@@ -52,22 +54,28 @@ namespace TrackTrek.Audio
                 {
                     using (HttpClient client = new HttpClient())
                     {
-                        string html;
-                        try
+                        string html = "";
+                        bool error = false;
+                        for (int i = 0;i>=10;i++)
                         {
-                            html = await client.GetStringAsync(videoUrl);
-                        } catch (Exception)
-                        {
-                            await Task.Delay(2000);
                             try
                             {
                                 html = await client.GetStringAsync(videoUrl);
-                            } catch (Exception)
-                            {
-                                return new byte[0];
+                                error = false;
                             }
+                            catch (Exception)
+                            {
+                                error = true;
+                                await Task.Delay(2000);
+                            } 
                         }
+                        if (error == true)
+                        {
+                            return await CustomMetaData.DownloadThumbnailAsBytes("https://r2.image-upload.app/uploads/permanent/image/1771522735192-i59pdc6gfmd.png");
+                        }
+                        
                         var doc = new HtmlAgilityPack.HtmlDocument();
+                        
                         doc.LoadHtml(html);
 
                         var imageNode = doc.DocumentNode.SelectSingleNode("//meta[@property='og:image']");
