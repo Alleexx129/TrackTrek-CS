@@ -1,4 +1,4 @@
-# This is currently broken due to YoutubeExplode library being outdated, a fix will be implemented within a few days.
+# This is an unstable fix, I'm currently rewriting most of the existing code, please be patient.
 # I might also switch to another library soon after.
 
 # This is an beta unstable version. Expect bugs and non-existent features that will be added in the near future, please report any [bugs here](https://github.com/Alleexx129/TrackTrek-CS/issues). Download Here [(Latest beta)](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v1.1.7-beta1)
