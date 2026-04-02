@@ -1,5 +1,4 @@
 # This is an unstable fix, I'm currently rewriting most of the existing code, please be patient.
-# I might also switch to another library soon after.
 
 # This is an beta unstable version. Expect bugs and non-existent features that will be added in the near future, please report any [bugs here](https://github.com/Alleexx129/TrackTrek-CS/issues). Download Here [(Latest beta)](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v1.2.5-beta1)
 
