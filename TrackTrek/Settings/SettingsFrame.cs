@@ -150,7 +150,7 @@ namespace TrackTrek.Settings
                 {
                     return;
                 }
-                Program.customPath = folderBrowser.SelectedPath;
+                Program.customPath = folderBrowser.SelectedPath + "\\";
                 if (Program.customPath.Length < 36)
                 {
                     customPathDisplay.Text = Program.customPath;

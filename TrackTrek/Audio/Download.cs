@@ -1,4 +1,7 @@
-﻿using System;
+﻿using AngleSharp.Media;
+using MediaToolkit;
+using MediaToolkit.Model;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,14 +11,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
-using AngleSharp.Media;
-using MediaToolkit;
-using MediaToolkit.Model;
 using TrackTrek.Miscs;
 using TrackTrek.UI;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
+using YtdlpNET;
 using static TrackTrek.Miscs.Searching;
+
+
 
 namespace TrackTrek.Audio
 {
@@ -25,7 +28,7 @@ namespace TrackTrek.Audio
         private static List<object[]> queue = new List<object[]>();
         private static bool downloading = false;
 
-        private static async Task<string> ConvertAndDelete(string name, string path, ListViewItem item)
+        private static async Task<string> ConvertAndDelete(string name, string path, ListViewItem item) // to delete in future
         {
             string outputPath = Path.Combine(Program.customPath, $"{name}.mp3");
             Form1.downloadProgress.Invoke(new MethodInvoker(() =>
@@ -55,8 +58,9 @@ namespace TrackTrek.Audio
 
                 var outputTask = process.StandardOutput.ReadToEndAsync();
                 var errorTask = process.StandardError.ReadToEndAsync();
-                var waitTask = process.WaitForExitAsync();
 
+                await process.WaitForExitAsync();
+                
                 string output = await outputTask;
                 string error = await errorTask;
 
@@ -70,10 +74,12 @@ namespace TrackTrek.Audio
                 {
                     Form1.downloadProgress.Value = 80;
                 }));
+
                 if (File.Exists(path))
                 {
                     File.Delete(path);
                 }
+
                 Form1.downloadProgress.Invoke(new MethodInvoker(() =>
                 {
                     item.SubItems[1].Text = "Completed!";
@@ -91,11 +97,59 @@ namespace TrackTrek.Audio
             {
                 // function not used :( 
                 // Will delete in the future
+                // meh maybe ill use it when I rewrite the code
             }
             return "";
         }
+        public static async Task<VideoInfo> DownloadAudio(string link) // done
+        {
+            // MessageBox.Show($"""--print "Title: %(title|Unknown)s\nArtist: %(uploader|Unknown)s\nThumbnail: %(thumbnail|Unknown)s" --no-simulate -P "{Program.customPath}" -o "%(title)s - %(uploader)s.%(ext)s" -t mp3 "https://www.youtube.com/watch?v=nK9wM_WLjhA" """);
+            // Arguments = $"--print \"Title: %(title|Unknown)s\nArtist: %(uploader|Unknown)s\nThumbnail: %(thumbnail|Unknown)s\" -o \"%(title)s-%(uploader)s.%(ext)s\" -P \"{Program.customPath}\" \"https://www.youtube.com/watch?v=nK9wM_WLjhA\"",
 
-        private protected static async Task<string> DownloadAudio(string artist, string title, string query, ListViewItem item)
+            var processStartInfo = new ProcessStartInfo
+            {
+                FileName = "yt-dlp.exe",
+                Arguments = $"""--print "Title: %(title|Unknown)s\nArtist: %(uploader|Unknown)s\nThumbnail: %(thumbnail|Unknown)s" --no-simulate -P "{Program.customPath} " -o "%(title)s - %(uploader)s.%(ext)s" -t mp3 "{link}" """,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = false,
+            };
+
+            using (var process = new Process { StartInfo = processStartInfo })
+            {
+                //process.Start();
+                //await process.WaitForExitAsync();
+
+                //var errorTask = process.StandardError.ReadToEndAsync();
+                //MessageBox.Show(errorTask.Result);
+                //var outputTask = process.StandardOutput.ReadToEndAsync();
+                process.Start();
+                await process.WaitForExitAsync();
+
+
+                var error = await process.StandardError.ReadToEndAsync();
+                var output = await process.StandardOutput.ReadToEndAsync();
+
+                Sys.debug("Current output errors, these may be normal...\n" + error);
+                Sys.debug("Output from console: \n" + output);
+
+                string[] splitOut = output.Split("\\n");
+                string Title = splitOut[0].Replace("Title: ", "");
+                string Author = splitOut[1].Replace("Artist: ", "");
+                string ThumbnailUrl = splitOut[2].Replace("Thumbnail: ", "");
+
+                VideoInfo videoInfo = new VideoInfo();
+                videoInfo.Title = Title;
+                videoInfo.YoutubeArtist = Author;
+                videoInfo.AlbumImageUrl = ThumbnailUrl;
+                videoInfo.Path = $"{Program.customPath}{Title} - {Author}.mp3";
+
+                return videoInfo;
+            }
+        }
+
+        private protected static async Task<string> DownloadAudio2(string artist, string title, string query, ListViewItem item) // old one
         {
             YoutubeClient youtube = new YoutubeClient();
 
@@ -133,7 +187,7 @@ namespace TrackTrek.Audio
             }
 
             Stream stream = await youtube.Videos.Streams.GetAsync(streamInfo);
-            string name = title + " - " + Filter.FilterArtistName(artist).toCapitalFirst();
+            string name = title + " - " + Filter.FilterArtist(artist).ToCapitalFirst();
 
             Sys.debug($"Step 2 Download");
 
@@ -208,7 +262,7 @@ namespace TrackTrek.Audio
 
             downloading = true;
 
-            string outp = await DownloadAudio(artist, title, query, item);
+            //string outp = await DownloadAudio(artist, title, query, item);
             lock (queue)
             { 
                 queue.RemoveAt(0); 
@@ -217,7 +271,14 @@ namespace TrackTrek.Audio
             downloading = false;
 
 
-            return outp;
+            return "";
         }
     }
 }
+
+// future structure
+/*
+ * Add more folders
+ * Classes folder
+ * ...
+*/

@@ -24,7 +24,14 @@ namespace TrackTrek.Miscs
             string[] list = {};
 
             // Filter.ToGeniusLink
-            string html = await client.GetStringAsync(Link);
+            string html;
+            try {
+                html = await client.GetStringAsync(Link);
+            } catch(Exception)
+            {
+                return "";
+            }
+            
             HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
             doc.LoadHtml(html);
 

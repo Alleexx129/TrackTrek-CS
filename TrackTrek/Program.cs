@@ -16,7 +16,7 @@ namespace TrackTrek
         public static bool searchingPlaylist = false;
         public static bool debug = false;
         public static string maxResults = "10";
-        public static string customPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+        public static string customPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads\\");
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
@@ -33,16 +33,15 @@ namespace TrackTrek
                 Program.debug = jsonNode["debug"].GetValue<bool>();
                 if (!jsonNode.AsObject().ContainsKey("customPath"))
                 {
-                    MessageBox.Show("test");
-                    jsonNode["customPath"] = Program.customPath;
+                    jsonNode["customPath"] = (Program.customPath + "\\").Replace("\\\\", "\\");
                     File.WriteAllText(path, jsonNode.ToJsonString());
                 }
-                Program.customPath = jsonNode["customPath"].GetValue<string>();
+                Program.customPath = (jsonNode["customPath"].GetValue<string>() + "\\").Replace("\\\\", "\\");
                 Program.maxResults = jsonNode["maxResults"].GetValue<string>();
             }
             catch (Exception e)
             {
-                File.WriteAllText(path, $"{{\"debug\": true, \"maxResults\": \"10\", \"customPath\": \"{(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads")).Replace("\\", "\\\\")}\"}}");
+                File.WriteAllText(path, $"{{\"debug\": true, \"maxResults\": \"10\", \"customPath\": \"{(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads\\")).Replace("\\", "\\\\")}\"}}");
                 jsonNode = JsonNode.Parse(File.ReadAllText(path));
                 Program.debug = jsonNode["debug"].GetValue<bool>();
                 Sys.debug("Missing/Malformatted value in Settings.json, resetting to default values. Advanced: " + e.Message.ToString());
@@ -132,16 +131,21 @@ namespace TrackTrek
 
                 Sys.debug("Audio downloaded!: " + output);
 
-                string albumImage = await ImageUtils.GetAlbumImage(album, artist);
+                string albumImage = await ImageUtils.GetAlbumImageUrl(album, artist); // not good 
 
                 Sys.debug("Adding album image: " + albumImage);
 
-                string geniusLink = Lyrics.ToGeniusLink(title, artist);
-                string lyrics = await Lyrics.GetLyrics(geniusLink);
+                string lyrics = "";
+                string geniusLink = "Youtube Video";
+                if (album != "Youtube")
+                {
+                    geniusLink = Lyrics.ToGeniusLink(title, artist);
+                    lyrics = await Lyrics.GetLyrics(geniusLink);
+                }
 
                 Sys.debug("Adding lyrics: " + geniusLink);
 
-                await CustomMetaData.Add(output, albumImage, artist.toCapitalFirst(), title, lyrics, album);
+               // await CustomMetaData.Add(output, albumImage, artist.ToCapitalFirst(), title, lyrics, album);
 
                 Form1.downloadProgress.Invoke(new MethodInvoker(() =>
                 {

@@ -36,7 +36,7 @@ namespace TrackTrek.Miscs
         }
         private static readonly HttpClient client = new HttpClient();
 
-        private protected static async Task<string> GetAlbumImageFromSongPage(string songAlbumUrl)
+        public static async Task<string> GetAlbumImageFromSongPage(string songAlbumUrl)
         {
             int attempt = 0;
 
@@ -54,6 +54,7 @@ namespace TrackTrek.Miscs
                 {
                     Sys.debug(ex.Message.ToString());
                 }
+                Task.Delay(attempt * 1000);
             }
             return "";
         }
@@ -63,10 +64,11 @@ namespace TrackTrek.Miscs
             string albumUrl = $"https://www.last.fm/music/{artistName.Replace(" ", "+")}/{albumName.Replace(" ", "+")}/+images";
             return albumUrl;
         }
-        public static async Task<string> GetAlbumImage(string albumName, string artistName)
+
+        public static async Task<string> GetSoundCloudUrl(string title, string artist)
         {
-            string albumUrl = $"https://www.last.fm/music/{artistName.Replace(" ", "+")}/{albumName.Replace(" ", "+")}/+images";
-            return await GetAlbumImageFromSongPage(albumUrl);
+            string albumUrl = $"https://soundcloud.com/{artist.Replace(" ", "-").ToLower()}/{title.Replace(" ", "-").ToLower()}";
+            return albumUrl;
         }
     }
 

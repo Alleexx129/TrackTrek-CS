@@ -1,20 +1,13 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
-using HtmlAgilityPack;
-using TrackTrek.Miscs;
-using YoutubeExplode.Videos;
+﻿using TrackTrek.Miscs;
 
 namespace TrackTrek.Audio
 {
     internal class CustomMetaData
     {
-        public static async Task Add(string path, dynamic imageUrl, string artist, string title, string lyrics, string? albumName = "")
+        public static async Task Add(Searching.VideoInfo videoInfo)
         {
-            //string lyricsUrl;
-            TagLib.File file = TagLib.File.Create(path);
-            //HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
-            //doc.LoadHtml(lyricsUrl);
-            byte[] imageBytes = await DownloadThumbnailAsBytes(imageUrl);
+            TagLib.File file = TagLib.File.Create(videoInfo.Path);
+            byte[] imageBytes = await DownloadThumbnailAsBytes(videoInfo.AlbumImageUrl);
 
 
             var picture = new TagLib.Picture
@@ -25,38 +18,65 @@ namespace TrackTrek.Audio
             };
 
             file.Tag.Pictures = new TagLib.IPicture[] { picture };
-            file.Tag.Performers = new string[] { Filter.FilterArtistName(artist).toCapitalFirst() };
-            file.Tag.Title = title;
-            file.Tag.Album = albumName;
-            file.Tag.Lyrics = lyrics;
+            file.Tag.Performers = new string[] {Filter.FilterArtist(videoInfo.GetArtist())};
+            file.Tag.Title = videoInfo.Title;
+            file.Tag.Album = videoInfo.Album;
+            file.Tag.Lyrics = videoInfo.Lyrics;
 
-            file.Save();
+            file.Save(); // used by another process error
         }
 
         public static async Task<byte[]> DownloadThumbnailAsBytes(object url)
         {
-            Sys.debug(url);
+            
             if (url is byte[] byteArray)
             {
+                Sys.debug("Image is byte array of " + byteArray.Length.ToString() + "Characters");
                 return byteArray;
             }
-            else if (url is string videoUrl)
+            else if (url is string imageUrl)
             {
-                if (videoUrl.EndsWith(".png") || videoUrl.EndsWith(".jpg") || videoUrl.EndsWith(".webp"))
+                Sys.debug(imageUrl);
+                if (imageUrl.EndsWith(".png") || imageUrl.EndsWith(".jpg") || imageUrl.EndsWith(".webp"))
                 {
                     using (HttpClient client = new HttpClient())
                     {
-                        return await client.GetByteArrayAsync(videoUrl);
+                        return await client.GetByteArrayAsync(imageUrl);
                     }
                 } else
                 {
                     using (HttpClient client = new HttpClient())
                     {
-                        var html = await client.GetStringAsync(videoUrl);
+                        string html = "";
+                        bool error = false;
+                        for (int i = 0;i<=10;i++)
+                        {
+                            try
+                            {
+                                html = await client.GetStringAsync(imageUrl);
+                                error = false;
+                                break;
+                            }
+                            catch (Exception e)
+                            {
+                                Sys.debug($"Unexpected error occured: {e}");
+                                Sys.debug($"Retrying... {i}");
+                                error = true;
+                                await Task.Delay(2000);
+                            }
+                        }
+                        if (error == true)
+                        {
+                            Sys.debug($"Could not find picture from url \"{imageUrl}\"");
+                            return await CustomMetaData.DownloadThumbnailAsBytes("https://r2.image-upload.app/uploads/permanent/image/1771522735192-i59pdc6gfmd.png");
+                        }
+                        
                         var doc = new HtmlAgilityPack.HtmlDocument();
+                        
                         doc.LoadHtml(html);
 
                         var imageNode = doc.DocumentNode.SelectSingleNode("//meta[@property='og:image']");
+                        Sys.debug($"Image url: {imageUrl}");
                         // IEnumerable<HtmlNode> nodes = doc.DocumentNode.Descendants(0).Where(n => n.HasClass("image-list-item"));
                         // var imgNode = nodes.First();
                         // var newhtml = await client.GetStringAsync("https://last.fm" + imgNode.GetAttributeValue("href", null));

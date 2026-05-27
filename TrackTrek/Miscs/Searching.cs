@@ -21,20 +21,105 @@ namespace TrackTrek.Miscs
 {
     internal class Searching
     {
-        public static string CheckIfLink(string text)
-        {
-            string ctype = "";
-            if (text.ToLower().Contains("https") || text.ToLower().Contains("youtube.com") || text.ToLower().Contains("youtu.be"))
-            {
-                ctype = "link";
 
-                if (text.ToLower().Contains("?list="))
+        public static async Task<VideoInfo> FetchAndUpdateWithItune(VideoInfo videoInfo) // All infos are filtered, requires title and artist (using for yt searching)
+        {
+            HttpClient client = new HttpClient();
+
+            HttpResponseMessage httpResponse = await client.GetAsync($"https://itunes.apple.com/search?term={videoInfo.Title} by {videoInfo.GetArtist()}&entity=song");
+            while (!httpResponse.IsSuccessStatusCode)
+            {
+                await Task.Delay(1500);
+                httpResponse = await client.GetAsync($"https://itunes.apple.com/search?term={videoInfo.Title} by {videoInfo.GetArtist()}&entity=song");
+            }
+
+            string response = await httpResponse.Content.ReadAsStringAsync();
+            dynamic responseJson = JsonNode.Parse(response)["results"];
+
+            string bestTitle = "";
+            sbyte bestTitleConfidence = 0;
+            string bestAuthor = "";
+            sbyte bestAuthorConfidence = 0;
+            string bestAlbum = "";
+
+            foreach (JsonObject item in responseJson)
+            {
+                if (Filter.BlacklistedVideo(item["trackName"].ToString()))
                 {
-                    ctype = "playlist";
+                    Sys.debug("Skipped");
+                    continue;
+                }
+                string currentTitle = Filter.FilterTitle(item["trackName"].ToString());
+                string currentArtist = Filter.FilterArtist(item["artistName"].ToString());
+                string currentAlbum = Filter.FilterAlbum(item["collectionName"].ToString());
+
+                string[] titleAndArtist = Filter.ToTitleAndArtist(videoInfo.Title, videoInfo.GetArtist());
+
+                int currentTitleConfidence = Fuzz.Ratio(currentTitle.ToString(), titleAndArtist[0]);
+                int currentAuthorConfidence = Fuzz.Ratio(currentArtist.ToString(), titleAndArtist[1]);
+
+                if (currentTitleConfidence < Fuzz.Ratio(currentTitle.ToString(), titleAndArtist[1]))
+                {
+                    currentTitleConfidence = Fuzz.Ratio(currentTitle.ToString(), titleAndArtist[1]);
+                    currentAuthorConfidence = Fuzz.Ratio(currentArtist.ToString(), titleAndArtist[0]);
+                }
+
+                if (currentAuthorConfidence > bestAuthorConfidence && currentAuthorConfidence > 30) // 30 is minimum confidence
+                {
+                    Sys.debug($"Found new artist with confidence of {currentAuthorConfidence}%");
+                    bestAuthorConfidence = (sbyte)currentAuthorConfidence;
+                    bestAuthor = currentArtist;
+                    bestTitleConfidence = (sbyte)currentTitleConfidence;
+                    bestTitle = currentTitle;
+                    bestAlbum = currentAlbum;
+                    Sys.debug($"Title: {currentTitle} Confidence: {currentTitleConfidence}\nAlbum: {currentAlbum}");
+                } else if (currentAuthorConfidence == bestAuthorConfidence && currentTitleConfidence > bestTitleConfidence && currentTitleConfidence > 30)
+                {
+                    Sys.debug($"Found new title with confidence of {currentTitleConfidence}%");
+                    bestTitle = currentTitle;
+                    bestAlbum = currentAlbum;
+                    bestTitleConfidence = (sbyte)currentTitleConfidence;
                 }
             }
 
-            return ctype;
+            if (bestTitle != "")
+            {
+                videoInfo.Title = bestTitle;
+                videoInfo.Artist = bestAuthor.ToCapitalFirst();
+                videoInfo.Album = bestAlbum;
+            } else
+            {
+                videoInfo.Album = "Youtube";
+            }
+            return videoInfo;
+        }
+        public static async Task<VideoInfo> SearchImage(VideoInfo videoInfo) // does not check if it is Youtube or not, requires album and artist
+        {
+            string albumImageUrl = await ImageUtils.GetAlbumImageUrl(videoInfo.Album, videoInfo.GetArtist());
+
+            videoInfo.AlbumImageUrl = albumImageUrl;
+
+            return videoInfo;
+        }
+
+        public static async Task<VideoInfo> SearchWithItune(VideoInfo videoInfo)
+        {
+            return videoInfo;
+        }
+
+        public static async Task<VideoInfo> SearchAudioOnYt(VideoInfo videoInfo)
+        {
+            return videoInfo;
+        }
+
+        public static async Task<VideoInfo> SearchAndUpdateLyrics(VideoInfo videoInfo)
+        {
+            string lyricsUrl = Lyrics.ToGeniusLink(videoInfo.Title, videoInfo.GetArtist());
+
+            string lyrics = await Lyrics.GetLyrics(lyricsUrl);
+
+            videoInfo.Lyrics = lyrics;
+            return videoInfo; 
         }
 
         public static async Task<YoutubeExplode.Videos.Video> GetVideo(string title, string artist, string album)
@@ -97,7 +182,7 @@ namespace TrackTrek.Miscs
                         Sys.debug("Found video url:" + found.Url + " Title: " + found.Title.ToString() + " Author: " + found.Author.ToString() + " with accuracy of " + bestRatio + "%");
                         break;
                     }
-                } else { MessageBox.Show(foundVideo.Title); }
+                } else {  }
             }
             if (found != null)
             {
@@ -115,96 +200,38 @@ namespace TrackTrek.Miscs
             {
                 this.Title = string.Empty;
                 this.Album = string.Empty;
+                this.YoutubeArtist = string.Empty;
                 this.Artist = string.Empty;
+                this.Lyrics = string.Empty;
+                this.AlbumImageUrl = string.Empty;
                 this.AlbumImage = new byte[0];
+                this.Path = string.Empty;
             }
             public string Title { get; set; }
+
+            public string AlbumImageUrl { get; set; }
+            public string Lyrics { get; set; }
+
+            public string Path { get; set; }
             public string Artist { get; set; }
+            public string YoutubeArtist { get; set; }
             public byte[] AlbumImage { get; set; }
             public string Album { get; set; }
-        }
 
-        public static async Task<VideoInfo> FetchVideoInfos(string title, string uploader, byte[] thumbnail, bool bypass = false)
+            public string GetArtist()
+            {
+                if (Artist == string.Empty)
+                {
+                    return YoutubeArtist;
+                }
+                return Artist;
+            }
+        }
+        public static async Task<string> FetchVideoInfos(string title, string uploader, byte[] thumbnail, bool bypass = false)
         {
-            VideoInfo newVideoInfo = new VideoInfo{ Title = "", Artist = "", AlbumImage = thumbnail, Album = "Unknown", };
-
-            string[] filteredUploaderAndTitle = Filter.ToTitleAndArtist(title, uploader);
-
-            newVideoInfo.Title = filteredUploaderAndTitle[0];
-            newVideoInfo.Artist = filteredUploaderAndTitle[1];
-
-            HttpClient client = new HttpClient();
-
-            HttpResponseMessage httpResponse = await client.GetAsync($"https://itunes.apple.com/search?term={newVideoInfo.Title} by {newVideoInfo.Artist}&entity=song");
-            while (!httpResponse.IsSuccessStatusCode)
-            {
-                httpResponse = await client.GetAsync($"https://itunes.apple.com/search?term={newVideoInfo.Title} by {newVideoInfo.Artist}&entity=song");
-            }
-
-            string response = await httpResponse.Content.ReadAsStringAsync();
-            dynamic responseJson = JsonNode.Parse(response)["results"];
-
-            string bestArtist = "";
-            int bestArtistN = 0;
-            string bestTitle = "";
-            int bestTitleN = 0;
-            string bestAlbum = "";
-
-            foreach (JsonObject item in responseJson)
-            {
-                if (Filter.BlacklistedVideo(item["trackName"].ToString()) && bypass == false)
-                {
-                    Sys.debug("skipped");
-                    continue;
-                }
-
-                if (bestArtistN < Fuzz.Ratio(Filter.FilterArtistName(item["artistName"].ToString()), Filter.FilterArtistName(newVideoInfo.Artist.ToLower())))
-                {
-                    bestArtistN = Fuzz.Ratio(Filter.FilterArtistName(item["artistName"].ToString()), Filter.FilterArtistName(newVideoInfo.Artist.ToLower()));
-                    bestArtist = Filter.FilterArtistName(item["artistName"].ToString());
-                    Sys.debug("Detected artist: \"" + bestArtist + "\" Confidence " + bestArtistN + "%");
-                };
-
-                if (bestTitleN < Fuzz.Ratio(Filter.FilterTitle(item["trackName"].ToString()), Filter.FilterTitle(newVideoInfo.Title.ToLower())))
-                {
-                    bestTitle = Filter.FilterTitle(item["trackName"].ToString());
-                    bestAlbum = item["collectionName"].ToString();
-                    bestTitleN = Fuzz.Ratio(Filter.FilterTitle(item["trackName"].ToString()), Filter.FilterTitle(newVideoInfo.Title.ToLower()));
-                    Sys.debug("Detected title: \"" + bestTitle + "\" Confidence " + bestTitleN + "%");
-                    Sys.debug("Detected album: \"" + bestAlbum + "\"");
-                }
-
-                if (Fuzz.Ratio(Filter.FilterArtistName(item["artistName"].ToString()), Filter.FilterArtistName(newVideoInfo.Artist.ToLower())) > 80 && Fuzz.Ratio(Filter.FilterTitle(item["trackName"].ToString()), Filter.FilterTitle(newVideoInfo.Title.ToLower())) > 80)
-                {
-                    newVideoInfo.Album = item["collectionName"].ToString();
-                    newVideoInfo.Title = Filter.FilterTitle(item["trackName"].ToString());
-                    newVideoInfo.Artist = Filter.FilterArtistName(item["artistName"].ToString());;
-
-                    break;
-                }
-            }
-
-            if (bestTitleN < 15)
-            {
-                return new VideoInfo();
-            }
-
-            newVideoInfo.Album = bestAlbum;
-            newVideoInfo.Title = bestTitle;
-            newVideoInfo.Artist = bestArtist.toCapitalFirst();
-            if (newVideoInfo.Album == "Unknown")
-            {
-                newVideoInfo.AlbumImage = thumbnail; newVideoInfo.Album = "Youtube"; newVideoInfo.Title = title; newVideoInfo.Artist = uploader;
-                return newVideoInfo;
-            }
-            string? albumImage = await ImageUtils.GetAlbumImageUrl(newVideoInfo.Album, newVideoInfo.Artist);
-            newVideoInfo.AlbumImage = await CustomMetaData.DownloadThumbnailAsBytes(albumImage);
-            try
-            {
-                newVideoInfo.AlbumImage = await CustomMetaData.DownloadThumbnailAsBytes(albumImage);
-            } catch { newVideoInfo.AlbumImage = thumbnail; newVideoInfo.Album = "Youtube"; newVideoInfo.Title = title; newVideoInfo.Artist = uploader; }
-                return newVideoInfo;
+            return "";
         }
+        /*
         public static async Task<List<VideoInfo>> GetPlaylistVideos(string playlistUrl)
         {
             YoutubeClient youtube = new YoutubeClient();
@@ -237,13 +264,15 @@ namespace TrackTrek.Miscs
                     videoInfo.Title = title;
                     videoInfo.Artist = author;
                 }
+
                 videoInfos.Add(videoInfo);
                 Sys.debug($"Added to playlist infos: Artist: {videoInfo.Artist} Title: {videoInfo.Title} Album: {videoInfo.Album}");
             }
 
             return videoInfos;
         }
-    }   
-    
-    
+        */
+    }
+
+
 }

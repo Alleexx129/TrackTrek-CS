@@ -61,7 +61,9 @@ Errors fixed include:
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
     <PackageReference Include="MediaToolkit" Version="1.1.0.1" />
     <PackageReference Include="TagLibSharp" Version="2.3.0" />
-    <PackageReference Include="YoutubeExplode" Version="6.5.6" />
+    <PackageReference Include="YoutubeExplode" Version="6.5.7" />
+    <PackageReference Include="Ytdlp.NET" Version="2.0.1" />
+    <PackageReference Include="Ytdlp.Stable.Build" Version="6.2.4" />
   </ItemGroup>
 
   <ItemGroup>

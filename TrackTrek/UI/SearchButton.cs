@@ -1,15 +1,20 @@
 ﻿using AngleSharp.Common;
+using AngleSharp.Dom;
 using AngleSharp.Media;
 using HtmlAgilityPack;
 using System;
 using System.Buffers.Text;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Reflection.Metadata;
+using System.Runtime.Intrinsics.Arm;
+using System.Security.Policy;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -24,12 +29,14 @@ using YoutubeExplode.Search;
 using YoutubeExplode.Videos;
 using YoutubeExplode.Videos.Streams;
 using static MediaToolkit.Model.Metadata;
+using static System.Net.Mime.MediaTypeNames;
 using static TrackTrek.Miscs.Searching;
 
 namespace TrackTrek.UI
 {
     public class SearchButton : Button
     {
+        /*
         protected override async void OnClick(EventArgs e)
         {
             //string geniusLink = Lyrics.ToGeniusLink()
@@ -51,7 +58,28 @@ namespace TrackTrek.UI
 
                 Sys.debug($"Starting download...");
 
-                string output = await Download.EnqueueDownload(Filter.FilterArtistName(videoInfo.Author.ToString()), Filter.FilterTitle(videoInfo.Title.ToString()), query, newItem);
+                VideoInfo videoInfoFromITune = await Searching.FetchVideoInfos(videoInfo.Title.ToString(), videoInfo.Author.ToString(), new byte[0]);
+                string geniusLink;
+                string lyrics;
+                string output;
+
+                try
+                {
+                    geniusLink = Lyrics.ToGeniusLink(videoInfoFromITune.Title.ToString(), videoInfoFromITune.Artist.ToString());
+
+                    lyrics = await Lyrics.GetLyrics(geniusLink);
+                }
+                catch (Exception)
+                {
+                    lyrics = "";
+                }
+                if (lyrics == "")
+                {
+                    output = await Download.EnqueueDownload(Filter.FilterArtistName(videoInfo.Author.ToString()), Filter.FilterTitle(videoInfo.Title.ToString()), query, newItem);
+                } else
+                {
+                    output = await Download.EnqueueDownload(videoInfoFromITune.Artist, videoInfoFromITune.Title, query, newItem);
+                }
 
                 if (newItem.SubItems[1].Text == "Error!")
                 {
@@ -68,13 +96,14 @@ namespace TrackTrek.UI
 
                 Sys.debug($"Adding metadata: {thumbnail.Url} {videoInfo}");
 
-                VideoInfo videoInfoFromITune = await Searching.FetchVideoInfos(videoInfo.Title.ToString(), videoInfo.Author.ToString(), new byte[0]);
+                if (await ImageUtils.GetAlbumImage(videoInfoFromITune.Album.ToString(), videoInfoFromITune.Artist.ToString()) != string.Empty)
+                {
+                    await CustomMetaData.Add(output, await ImageUtils.GetAlbumImage(videoInfoFromITune.Album.ToString(), videoInfoFromITune.Artist.ToString()), videoInfoFromITune.Artist.ToString(), videoInfoFromITune.Title.ToString(), lyrics, videoInfoFromITune.Album.ToString());
+                } else
+                {
+                    await CustomMetaData.Add(output, thumbnail.Url, videoInfo.Author.ToString(), videoInfo.Title.ToString(), "", "Youtube");
+                }
 
-
-                string geniusLink = Lyrics.ToGeniusLink(videoInfoFromITune.Title.ToString(), videoInfoFromITune.Artist.ToString());
-                var lyrics = await Lyrics.GetLyrics(geniusLink);
-
-                await CustomMetaData.Add(output, await ImageUtils.GetAlbumImage(videoInfoFromITune.Album.ToString(), videoInfoFromITune.Artist.ToString()), videoInfoFromITune.Artist.ToString(), videoInfoFromITune.Title.ToString(), lyrics, videoInfoFromITune.Album.ToString());
 
                 Form1.downloadProgress.Invoke(new MethodInvoker(() =>
                 {
@@ -89,66 +118,75 @@ namespace TrackTrek.UI
                     {
                         Form1.searchButton.Enabled = false;
                     }));
+
+                    List<ListViewItem> results = Form1.resultsList.Items.Cast<ListViewItem>().ToList();
+
                     Task processTask = Task.Run(async () =>
                     {
-                        foreach (ListViewItem item in Form1.resultsList.Items)
+                        try
                         {
-                            TaskCompletionSource<bool> taskCompletionSource = new TaskCompletionSource<bool>();
-                            await Task.Delay(100);
-                            ListViewItem resultItem = item;
-                            ListViewItem newItem = new ListViewItem("Loading...");
-
-                            string title = resultItem.SubItems[1].Text;
-                            string artist = resultItem.SubItems[2].Text;
-                            string album = resultItem.SubItems[3].Text;
-
-                            Form1.downloadQueue.Invoke(new MethodInvoker(() =>
+                            foreach (ListViewItem resultItem in results)
                             {
-                                newItem.SubItems.Add("Loading...");
-                                Form1.downloadQueue.Items.Add(newItem);
-                            }));
+                                TaskCompletionSource<bool> taskCompletionSource = new TaskCompletionSource<bool>();
+                                await Task.Delay(100);
+                                ListViewItem newItem = new ListViewItem("Loading...");
 
-                            YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title, artist, album);
+                                string title = resultItem.SubItems[1].Text;
+                                string artist = resultItem.SubItems[2].Text;
+                                string album = resultItem.SubItems[3].Text;
 
-
-                            Sys.debug("Starting download...");
-
-                            string output = await Download.EnqueueDownload(artist.Replace("/", "-"), title.Replace("/", "-"), videoInfo.Url, newItem);
-
-                            Form1.downloadQueue.Invoke(new MethodInvoker(() =>
-                            {
-                                if (newItem.SubItems[1].Text == "Error!")
+                                Form1.downloadQueue.Invoke(new MethodInvoker(() =>
                                 {
-                                    Form1.downloadProgress.Value = 100;
-                                    taskCompletionSource.SetResult(true);
-                                    return;
+                                    newItem.SubItems.Add("Loading...");
+                                    Form1.downloadQueue.Items.Add(newItem);
+                                }));
+
+                                YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title, artist, album);
+
+
+                                Sys.debug("Starting download...");
+
+                                string output = await Download.EnqueueDownload(artist.Replace("/", "-"), title.Replace("/", "-"), videoInfo.Url, newItem);
+
+                                Form1.downloadQueue.Invoke(new MethodInvoker(() =>
+                                {
+                                    if (newItem.SubItems[1].Text == "Error!")
+                                    {
+                                        Form1.downloadProgress.Value = 100;
+                                        taskCompletionSource.SetResult(true);
+                                        return;
+                                    }
+
+                                }));
+
+                                Sys.debug("Audio downloaded!: " + output);
+
+                                if (album != "Youtube")
+                                {
+                                    string geniusLink = Lyrics.ToGeniusLink(title, artist);
+                                    var lyrics = await Lyrics.GetLyrics(geniusLink);
+                                    Sys.debug(resultItem.SubItems[4].Text + " is supposed to be image");
+
+                                    await CustomMetaData.Add(output, Convert.FromBase64String(resultItem.SubItems[4].Text), artist.toCapitalFirst(), title, lyrics, album);
+                                }
+                                else
+                                {
+                                    byte[] imageByte = await CustomMetaData.DownloadThumbnailAsBytes(videoInfo.Thumbnails[videoInfo.Thumbnails.Count - 1].Url);
+                                    byte[] resizedImage = ImageUtils.ResizeImage(imageByte);
+                                    await CustomMetaData.Add(output, resizedImage, artist.toCapitalFirst(), title, "Unknown", album);
                                 }
 
-                            }));
 
-                            Sys.debug("Audio downloaded!: " + output);
 
-                            if (album != "Youtube")
-                            {
-                                string geniusLink = Lyrics.ToGeniusLink(title, artist);
-                                var lyrics = await Lyrics.GetLyrics(geniusLink);
-
-                                await CustomMetaData.Add(output, Convert.FromBase64String(resultItem.SubItems[4].Text), artist.toCapitalFirst(), title, lyrics, album);
+                                Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                                {
+                                    Form1.downloadProgress.Value = 100;
+                                }));
+                                taskCompletionSource.SetResult(true);
                             }
-                            else
-                            {
-                                byte[] imageByte = await CustomMetaData.DownloadThumbnailAsBytes(videoInfo.Thumbnails[videoInfo.Thumbnails.Count - 1].Url);
-                                byte[] resizedImage = ImageUtils.ResizeImage(imageByte);
-                                await CustomMetaData.Add(output, resizedImage, artist.toCapitalFirst(), title, "Unknown", album);
-                            }
-
-
-
-                            Form1.downloadProgress.Invoke(new MethodInvoker(() =>
-                            {
-                                Form1.downloadProgress.Value = 100;
-                            }));
-                            taskCompletionSource.SetResult(true);
+                        } catch (Exception e)
+                        {
+                            MessageBox.Show(e.ToString());
                         }
                     });
 
@@ -161,7 +199,7 @@ namespace TrackTrek.UI
                     {
                         Sys.debug("Couldn't download: Timeout");
                     }
-                    */
+                    *\/
 
                     Form1.searchButton.Invoke(new MethodInvoker(() =>
                     {
@@ -171,10 +209,12 @@ namespace TrackTrek.UI
                     base.OnClick(e);
                     return;
                 }
-
-                Form1.searchButton.Text = "Download";
-
                 Program.searchingPlaylist = true;
+                Form1.searchButton.Invoke(new MethodInvoker(() =>
+                {
+                    Form1.searchButton.Text = "Download";
+                    Form1.searchButton.Enabled = false;
+                }));
 
 
 
@@ -212,7 +252,18 @@ namespace TrackTrek.UI
                     {
                         listItem = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
 
-                        Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
+                        try
+                        {
+                            Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
+                        } catch(Exception)
+                        {
+
+                            Task processTask = Task.Run(async () =>
+                            {
+                                var thum = await CustomMetaData.DownloadThumbnailAsBytes("https://r2.image-upload.app/uploads/permanent/image/1771522735192-i59pdc6gfmd.png");
+                                Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(new MemoryStream(thum)));
+                            });
+                        }
 
                         listItem.SubItems.Add(video.Title);
                         listItem.SubItems.Add(video.Artist);
@@ -279,6 +330,70 @@ namespace TrackTrek.UI
                     }
                 }
             }
+            base.OnClick(e);
+        }
+        */
+        protected override async void OnClick(EventArgs e)
+        {
+            string? query = this.Parent?.Controls.OfType<SearchBar>().FirstOrDefault()?.Text;
+
+            if (query == string.Empty || query == null)
+            {
+                Sys.debug("No input");
+                return;
+            }
+
+            string videoType = query.CheckStringType();
+
+            // need to check if its Search or Download (for playlist)
+
+            // "link" "playlist" "keyword"
+            switch(videoType)
+            {
+                case "link":
+                    Sys.debug("Identified type \"Youtube Video Link\" to be the query");
+
+                    Sys.debug($"Downloading audio...");
+
+                    VideoInfo audioOutput = await Download.DownloadAudio(this.Parent.Controls.OfType<SearchBar>().FirstOrDefault().Text);
+
+                    Sys.debug($"Audio downloaded!: {audioOutput.Path}");
+
+                    VideoInfo musicUpdatedInfo = await Searching.FetchAndUpdateWithItune(audioOutput);
+                    VideoInfo musicUpdatedInfoFinal;
+
+                    if (musicUpdatedInfo.Album == "Youtube")
+                    {
+                        musicUpdatedInfo.Lyrics = "No lyrics found";
+                        musicUpdatedInfo.Artist = musicUpdatedInfo.Title.ToArtistDashTitle(musicUpdatedInfo.GetArtist()).Split()[0];
+                        musicUpdatedInfo.Title = musicUpdatedInfo.Title.ToArtistDashTitle(musicUpdatedInfo.GetArtist()).Split()[1];
+                        musicUpdatedInfoFinal = musicUpdatedInfo;
+                        Sys.debug("Couldn't find info from itune, trying to search image and update info with it");
+                    } else
+                    {
+                        VideoInfo musicUpdatedInfoImage = await Searching.SearchImage(musicUpdatedInfo);
+
+                        musicUpdatedInfoFinal = await SearchAndUpdateLyrics(musicUpdatedInfoImage);
+                    }
+
+                    Sys.debug($"Video Infos:\n  Path:{musicUpdatedInfoFinal.Path}\n  Title:{musicUpdatedInfoFinal.Title}\n  Artist: {musicUpdatedInfoFinal.GetArtist()}\n  Album: {musicUpdatedInfoFinal.Album}\n  Album Image Found: {musicUpdatedInfoFinal.AlbumImageUrl != ""}");
+                    
+                    await CustomMetaData.Add(musicUpdatedInfo);
+                    
+                    break;
+                case "playlist":
+                    // same as link but foreach, not same for spotify
+                    break;
+                case "keyword":
+                    // first search itune, get info, get lyrics and all, then at the end search audio
+
+                    // also need to update the double click in button list
+                    break;
+                default:
+                    MessageBox.Show("Please enter something in the typing box");
+                    break;
+            }
+            
             base.OnClick(e);
         }
     };
