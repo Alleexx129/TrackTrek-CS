@@ -76,7 +76,12 @@ namespace TrackTrek.UI
                 if (lyrics == "")
                 {
                     output = await Download.EnqueueDownload(Filter.FilterArtistName(videoInfo.Author.ToString()), Filter.FilterTitle(videoInfo.Title.ToString()), query, newItem);
+<<<<<<< HEAD
                 } else
+=======
+                }
+                else
+>>>>>>> b9fa676d63c9bdb7c2413ca6f305a4957e916700
                 {
                     output = await Download.EnqueueDownload(videoInfoFromITune.Artist, videoInfoFromITune.Title, query, newItem);
                 }
@@ -99,7 +104,12 @@ namespace TrackTrek.UI
                 if (await ImageUtils.GetAlbumImage(videoInfoFromITune.Album.ToString(), videoInfoFromITune.Artist.ToString()) != string.Empty)
                 {
                     await CustomMetaData.Add(output, await ImageUtils.GetAlbumImage(videoInfoFromITune.Album.ToString(), videoInfoFromITune.Artist.ToString()), videoInfoFromITune.Artist.ToString(), videoInfoFromITune.Title.ToString(), lyrics, videoInfoFromITune.Album.ToString());
+<<<<<<< HEAD
                 } else
+=======
+                }
+                else
+>>>>>>> b9fa676d63c9bdb7c2413ca6f305a4957e916700
                 {
                     await CustomMetaData.Add(output, thumbnail.Url, videoInfo.Author.ToString(), videoInfo.Title.ToString(), "", "Youtube");
                 }
@@ -123,9 +133,15 @@ namespace TrackTrek.UI
 
                     Task processTask = Task.Run(async () =>
                     {
+<<<<<<< HEAD
                         try
                         {
                             foreach (ListViewItem resultItem in results)
+=======
+                        foreach (ListViewItem resultItem in results)
+                        {
+                            try
+>>>>>>> b9fa676d63c9bdb7c2413ca6f305a4957e916700
                             {
                                 TaskCompletionSource<bool> taskCompletionSource = new TaskCompletionSource<bool>();
                                 await Task.Delay(100);
@@ -184,9 +200,17 @@ namespace TrackTrek.UI
                                 }));
                                 taskCompletionSource.SetResult(true);
                             }
+<<<<<<< HEAD
                         } catch (Exception e)
                         {
                             MessageBox.Show(e.ToString());
+=======
+                            catch (Exception e)
+                            {
+                                MessageBox.Show("Error (fix will be implemented soon) \n Audio " + resultItem.SubItems[1].Text + " won't be downloaded\nClick to dismiss... " + e.ToString()); // note to myself, do better than that and fix the bug causing it not to show
+                                Sys.debug(e.ToString());
+                            }
+>>>>>>> b9fa676d63c9bdb7c2413ca6f305a4957e916700
                         }
                     });
 
@@ -228,28 +252,58 @@ namespace TrackTrek.UI
 
                 foreach (var video in videoInfos)
                 {
-                    index++;
-                    ListViewItem listItem;
-                    Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                    try
                     {
-                        Form1.downloadProgress.Value = 100;
-                    }));
 
-                    if (Form1.resultsList.SmallImageList == null)
-                    {
-                        Form1.resultsList.SmallImageList = new ImageList();
-                        Form1.resultsList.SmallImageList.ImageSize = new Size(70, 70);
+                        index++;
+                        ListViewItem listItem;
+                        Form1.downloadProgress.Invoke(new MethodInvoker(() =>
+                        {
+                            Form1.downloadProgress.Value = 100;
+                        }));
+
+                        if (Form1.resultsList.SmallImageList == null)
+                        {
+                            Form1.resultsList.SmallImageList = new ImageList();
+                            Form1.resultsList.SmallImageList.ImageSize = new Size(70, 70);
+                        }
+
+                        Bitmap bitmap;
+                        byte[] resizedImage = video.AlbumImage;
+
+                        string header = BitConverter.ToString(resizedImage.Take(12).ToArray());
+
+                        Stream imageStream = new MemoryStream(resizedImage);
+
+                        Form1.resultsList.Invoke(new MethodInvoker(() =>
+                        {
+                            listItem = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
+
+                            try
+                            {
+                                Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(imageStream));
+                            }
+                            catch (Exception)
+                            {
+
+                                Task processTask = Task.Run(async () =>
+                                {
+                                    var thum = await CustomMetaData.DownloadThumbnailAsBytes("https://r2.image-upload.app/uploads/permanent/image/1771522735192-i59pdc6gfmd.png");
+                                    Form1.resultsList.SmallImageList.Images.Add(Image.FromStream(new MemoryStream(thum)));
+                                });
+                            }
+
+                            listItem.SubItems.Add(video.Title);
+                            listItem.SubItems.Add(video.Artist);
+                            listItem.SubItems.Add(video.Album);
+                            listItem.SubItems.Add(Convert.ToBase64String(video.AlbumImage));
+
+                            Form1.resultsList.Items.Add(listItem);
+                        }));
                     }
-
-                    Bitmap bitmap;
-                    byte[] resizedImage = video.AlbumImage;
-
-                    string header = BitConverter.ToString(resizedImage.Take(12).ToArray());
-
-                    Stream imageStream = new MemoryStream(resizedImage);
-
-                    Form1.resultsList.Invoke(new MethodInvoker(() =>
+                    catch (Exception err)
                     {
+<<<<<<< HEAD
                         listItem = new ListViewItem("", Form1.resultsList.SmallImageList.Images.Count);
 
                         try
@@ -272,6 +326,11 @@ namespace TrackTrek.UI
 
                         Form1.resultsList.Items.Add(listItem);
                     }));
+=======
+                        MessageBox.Show("Error (fix will be implemented soon) click to dismiss... " + err.ToString()); // note to myself, do better than that and fix the bug causing it not to show
+                        Sys.debug(err.ToString());
+                    }
+>>>>>>> b9fa676d63c9bdb7c2413ca6f305a4957e916700
                 }
 
                 Form1.searchButton.Invoke(new MethodInvoker(() =>
