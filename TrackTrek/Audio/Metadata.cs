@@ -36,13 +36,9 @@ namespace TrackTrek.Audio
             }
             else if (url is string imageUrl)
             {
-<<<<<<< HEAD
                 Sys.debug(imageUrl);
-                if (imageUrl.EndsWith(".png") || imageUrl.EndsWith(".jpg") || imageUrl.EndsWith(".webp"))
-=======
-                Sys.debug(videoUrl);
-                if (videoUrl.EndsWith(".png") || videoUrl.EndsWith(".jpg") || videoUrl.EndsWith(".webp"))
->>>>>>> b9fa676d63c9bdb7c2413ca6f305a4957e916700
+                if (imageUrl.Trim().EndsWith(".png", StringComparison.OrdinalIgnoreCase) || imageUrl.Trim().EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || imageUrl.Trim().EndsWith(".webp", StringComparison.OrdinalIgnoreCase))
+
                 {
                     using (HttpClient client = new HttpClient())
                     {
@@ -54,7 +50,7 @@ namespace TrackTrek.Audio
                     {
                         string html = "";
                         bool error = false;
-<<<<<<< HEAD
+
                         for (int i = 0;i<=10;i++)
                         {
                             try
@@ -71,26 +67,9 @@ namespace TrackTrek.Audio
                                 await Task.Delay(2000);
                             }
                         }
+                        
                         if (error == true)
                         {
-                            Sys.debug($"Could not find picture from url \"{imageUrl}\"");
-=======
-                        for (int i = 0;i>=10;i++)
-                        {
-                            try
-                            {
-                                html = await client.GetStringAsync(videoUrl);
-                                error = false;
-                            }
-                            catch (Exception)
-                            {
-                                error = true;
-                                await Task.Delay(2000);
-                            } 
-                        }
-                        if (error == true)
-                        {
->>>>>>> b9fa676d63c9bdb7c2413ca6f305a4957e916700
                             return await CustomMetaData.DownloadThumbnailAsBytes("https://r2.image-upload.app/uploads/permanent/image/1771522735192-i59pdc6gfmd.png");
                         }
                         

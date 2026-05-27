@@ -33,11 +33,10 @@ namespace TrackTrek
                 Program.debug = jsonNode["debug"].GetValue<bool>();
                 if (!jsonNode.AsObject().ContainsKey("customPath"))
                 {
-<<<<<<< HEAD
+
                     jsonNode["customPath"] = (Program.customPath + "\\").Replace("\\\\", "\\");
-=======
+
                     jsonNode["customPath"] = Program.customPath;
->>>>>>> b9fa676d63c9bdb7c2413ca6f305a4957e916700
                     File.WriteAllText(path, jsonNode.ToJsonString());
                 }
                 Program.customPath = (jsonNode["customPath"].GetValue<string>() + "\\").Replace("\\\\", "\\");

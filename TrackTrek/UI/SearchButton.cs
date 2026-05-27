@@ -424,8 +424,11 @@ namespace TrackTrek.UI
                     if (musicUpdatedInfo.Album == "Youtube")
                     {
                         musicUpdatedInfo.Lyrics = "No lyrics found";
-                        musicUpdatedInfo.Artist = musicUpdatedInfo.Title.ToArtistDashTitle(musicUpdatedInfo.GetArtist()).Split()[0];
-                        musicUpdatedInfo.Title = musicUpdatedInfo.Title.ToArtistDashTitle(musicUpdatedInfo.GetArtist()).Split()[1];
+                        if (musicUpdatedInfo.Title.Contains(" - "))
+                        {
+                            musicUpdatedInfo.Artist = musicUpdatedInfo.Title.ToArtistDashTitle(musicUpdatedInfo.GetArtist()).Split(" - ")[0];
+                            musicUpdatedInfo.Title = musicUpdatedInfo.Title.ToArtistDashTitle(musicUpdatedInfo.GetArtist()).Split(" - ")[1];
+                        }
                         musicUpdatedInfoFinal = musicUpdatedInfo;
                         Sys.debug("Couldn't find info from itune, trying to search image and update info with it");
                     } else
@@ -447,6 +450,10 @@ namespace TrackTrek.UI
                     // first search itune, get info, get lyrics and all, then at the end search audio
 
                     // also need to update the double click in button list
+                    break;
+                case "spotify":
+                    // temporary
+                    // use https://open.spotify.com/oembed?url=playlisturlhere
                     break;
                 default:
                     MessageBox.Show("Please enter something in the typing box");
