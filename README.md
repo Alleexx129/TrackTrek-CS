@@ -1,6 +1,6 @@
 # This program is still in beta and is being rewritten at the moment. Please report any bugs [here](https://github.com/Alleexx129/TrackTrek-CS/issues).
 
-![TrackTrek logo](https://raw.githubusercontent.com/Alleexx129/Nyanko/refs/heads/main/logo4.png "TrackTrek")
+![TrackTrek logo](https://raw.githubusercontent.com/Alleexx129/Nyanko/refs/heads/main/logo1.png "TrackTrek")
 
 # TrackTrek
 
