@@ -4,6 +4,13 @@
 
 # TrackTrek
 
+### Download options
+[**[Download Latest Stable Beta]**](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v1.2.5-beta1)
+[**[Download Latest Alpha]**](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v2.0.0-alpha1) - this is a pre-release
+
+### Install dependencies
+[.Net Desktop Runtime 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.14-windows-x64-installer)
+
 ## What is this?
 **TrackTrek** is a C# utility designed to extract audio streams and media metadata from YouTube. Built as a front-end wrapper for `YoutubeExplode`, it allows you to archive your own videos, save royalty-free audio, and study stream data. It pulls the audio and automatically tags it with the correct metadata, including the title, artist, album info, and artwork.
 
@@ -13,17 +20,11 @@
 - **Artwork Archival**: Fetches and embeds the video thumbnail or album art.
 - **Built-in Search**: Easily search for content using keywords, or paste a link/playlist directly.
 
-### Install dependencies
-[.Net Desktop Runtime 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.14-windows-x64-installer)
 
 ## How to use?
 - Enter a YouTube link, keyword, or a YouTube playlist.
 - If you search with keywords, you can choose from the top 5 results (max results are customizable in settings).
 
-## Dependencies
-- YoutubeExplode
-- TagLib
-- FFmpeg (TrackTrek uses this to process the audio streams)
 
 ## Legal & Disclaimer
 TrackTrek is an open-source tool intended purely for educational use, personal archiving, and working with Creative Commons/Royalty-Free media. 
