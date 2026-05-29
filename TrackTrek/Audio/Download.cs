@@ -1,6 +1,4 @@
 ﻿using AngleSharp.Media;
-using MediaToolkit;
-using MediaToolkit.Model;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,14 +6,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using TrackTrek.Miscs;
 using TrackTrek.UI;
-using YoutubeExplode;
-using YoutubeExplode.Videos.Streams;
-using YtdlpNET;
 using static TrackTrek.Miscs.Searching;
 
 
@@ -109,12 +105,16 @@ namespace TrackTrek.Audio
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = "yt-dlp.exe",
-                Arguments = $"""--print "Title: %(title|Unknown)s\nArtist: %(uploader|Unknown)s\nThumbnail: %(thumbnail|Unknown)s" --no-simulate -P "{Program.customPath} " -o "%(title)s - %(uploader)s.%(ext)s" -t mp3 "{link}" """,
+                Arguments = $"""--print "Title: %(title|Unknown)s\nArtist: %(uploader|Unknown)s\nThumbnail: %(thumbnail|Unknown)s" --encoding utf-8 --no-simulate -P "{Program.customPath} " -o "%(title)s - %(uploader)s.%(ext)s" -t mp3 "{link}" """,
                 RedirectStandardOutput = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = false,
+                CreateNoWindow = true,
+
             };
+            processStartInfo.Environment["PYTHONIOENCODING"] = "utf-8";
 
             using (var process = new Process { StartInfo = processStartInfo })
             {
@@ -124,115 +124,44 @@ namespace TrackTrek.Audio
                 //var errorTask = process.StandardError.ReadToEndAsync();
                 //MessageBox.Show(errorTask.Result);
                 //var outputTask = process.StandardOutput.ReadToEndAsync();
+
                 process.Start();
+
+                Task<string> errorTask = process.StandardError.ReadToEndAsync();
+                Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+
                 await process.WaitForExitAsync();
 
+                string output = await outputTask;
+                string error = await errorTask;
 
-                var error = await process.StandardError.ReadToEndAsync();
-                var output = await process.StandardOutput.ReadToEndAsync();
+                //MessageBox.Show($"Output: {output}\nError: {error}");
 
                 Sys.debug("Current output errors, these may be normal...\n" + error);
                 Sys.debug("Output from console: \n" + output);
 
                 string[] splitOut = output.Split("\\n");
-                string Title = splitOut[0].Replace("Title: ", "");
-                string Author = splitOut[1].Replace("Artist: ", "");
+                var map = new Dictionary<char, char> { { '/', '⧸' }, { '\\', '⧹' }, { ':', '：' }, { '*', '∗' }, { '?', '？' }, { '"', '＂' }, { '<', '〈' }, { '>', '〉' }, { '|', '｜' } }; // I hate windows
+
+                string title = splitOut[0].Replace("Title: ", "");
+                string author = splitOut[1].Replace("Artist: ", "");
+
+                string sanatizedTitle = Regex.Replace(title ?? "", @"[\\/:*?""<>|]", m => map[m.Value[0]].ToString()).TrimEnd(' ');
+                sanatizedTitle = sanatizedTitle.EndsWith('.') ? sanatizedTitle[..^1] + "．" : sanatizedTitle;
+                string sanatizedAuthor = Regex.Replace(author ?? "", @"[\\/:*?""<>|]", m => map[m.Value[0]].ToString()).TrimEnd(' ');
+                sanatizedAuthor = sanatizedAuthor.EndsWith('.') ? sanatizedAuthor[..^1] + "．" : sanatizedAuthor;
                 string ThumbnailUrl = splitOut[2].Replace("Thumbnail: ", "");
 
                 VideoInfo videoInfo = new VideoInfo();
-                videoInfo.Title = Title;
-                videoInfo.YoutubeArtist = Author;
+                videoInfo.Title = title;
+                videoInfo.YoutubeArtist = author;
                 videoInfo.AlbumImageUrl = ThumbnailUrl;
-                videoInfo.Path = $"{Program.customPath}{Title} - {Author}.mp3";
+                videoInfo.YoutubeImageUrl = ThumbnailUrl;
+
+                videoInfo.Path = $"{Program.customPath}{sanatizedTitle} - {sanatizedAuthor}.mp3";
 
                 return videoInfo;
             }
-        }
-
-        private protected static async Task<string> DownloadAudio2(string artist, string title, string query, ListViewItem item) // old one
-        {
-            YoutubeClient youtube = new YoutubeClient();
-
-            Sys.debug($"Step 1 download");
-            Form1.downloadProgress.Invoke(new MethodInvoker(() =>
-            {
-                item.SubItems[0].Text = "Getting info...";
-                item.SubItems[1].Text = "Fetching...";
-            }));
-            StreamManifest streamManifest;
-            IStreamInfo streamInfo;
-
-            try
-            {
-                streamManifest = await youtube.Videos.Streams.GetManifestAsync(query);
-                streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
-            }
-            catch
-            {
-                try
-                {
-                    await Task.Delay(5000);
-                    streamManifest = await youtube.Videos.Streams.GetManifestAsync(query);
-                    streamInfo = streamManifest.GetAudioOnlyStreams().GetWithHighestBitrate();
-                } catch (Exception e)
-                {
-                    Sys.debug("Error when downloading: " + e.Message.ToString());
-                    Form1.downloadProgress.Invoke(new MethodInvoker(() =>
-                    {
-                        item.SubItems[1].Text = "Error!";
-                    }));
-                    return "C:\\";
-                }
-                
-            }
-
-            Stream stream = await youtube.Videos.Streams.GetAsync(streamInfo);
-            string name = title + " - " + Filter.FilterArtist(artist).ToCapitalFirst();
-
-            Sys.debug($"Step 2 Download");
-
-            String path = Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"), $"{name}.{streamInfo.Container}");
-
-            Sys.debug($"Path: {path}");
-
-            Form1.downloadProgress.Invoke(new MethodInvoker(() =>
-            {
-                item.SubItems[0].Text = path;
-                item.SubItems[1].Text = "Downloading...";
-
-                Form1.downloadProgress.Maximum = 100;
-                Form1.downloadProgress.Value = 20;
-            }));
-
-            try
-            {
-                await youtube.Videos.Streams.DownloadAsync(streamInfo, path);
-                Sys.debug("Downloaded");
-            } catch (Exception e)
-            {
-                Sys.debug("Error when downloading: " + e.Message.ToString());
-                Form1.downloadProgress.Invoke(new MethodInvoker(() =>
-                {
-                    item.SubItems[0].Text = path;
-                    item.SubItems[1].Text = "Error!";
-                }));
-                return path;
-            }
-
-            Sys.debug($"Final downloading...");
-
-            Form1.downloadProgress.Invoke(new MethodInvoker(() =>
-            {
-                Form1.downloadProgress.Value = 40;
-            }));
-
-            Sys.debug($"Starting \"ConvertAndDelete\"");
-
-            Form1.downloadProgress.Invoke(new MethodInvoker(() =>
-            {
-                item.SubItems[1].Text = "Converting...";
-            }));
-            return await ConvertAndDelete(name, path, item);
         }
 
         public async static Task<string> EnqueueDownload(string artist, string title, string query, ListViewItem item)

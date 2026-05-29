@@ -3,17 +3,14 @@ using System;
 using System.CodeDom.Compiler;
 using System.Collections;
 using System.Collections.Frozen;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using TrackTrek.Audio;
-using YoutubeExplode;
-using YoutubeExplode.Common;
-using YoutubeExplode.Search;
-using YoutubeExplode.Videos;
-using static MediaToolkit.Model.Metadata;
+using static System.Windows.Forms.LinkLabel;
 
 // clean this sometime soon
 
@@ -122,78 +119,54 @@ namespace TrackTrek.Miscs
             return videoInfo; 
         }
 
-        public static async Task<YoutubeExplode.Videos.Video> GetVideo(string title, string artist, string album)
+        //if (bestTitle != "")
+        //{
+        //videoInfo.Title = bestTitle;
+        //videoInfo.Artist = bestAuthor.ToCapitalFirst();
+        //videoInfo.Album = bestAlbum;
+        //} else
+        //{
+        //videoInfo.Album = "Youtube";
+        //}
+        //return videoInfo;
+        //}
+        public static async Task<VideoInfo> GetVideo(string title, string artist, string album = "Youtube")
         {
-            YoutubeClient youtube = new YoutubeClient();
-            VideoSearchResult? found = null;
-            byte bestRatio = 0;
-            byte index = 0;
-
-            await foreach(VideoSearchResult video in youtube.Search.GetVideosAsync($"{title} / {artist}"))
+            var processStartInfo = new ProcessStartInfo
             {
-                VideoSearchResult foundVideo = video;
-                VideoSearchResult foundVideo2 = video;
+                FileName = "yt-dlp.exe",
+                Arguments = $"""ytsearch5:"system of a down sugar" --get-id --get-title """,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = false,
+            };
 
-                if (foundVideo.Title.Contains(" - "))
-                {
-                    FrozenSet<string> dividedTitle = foundVideo.Title.Split(" - ").ToFrozenSet();
-                    
-                    foundVideo = new VideoSearchResult(video.Id, dividedTitle.Last().ToLower().Replace("("+album.ToLower()+")", ""), new Author(video.Author.ChannelId, dividedTitle.First().ToLower().Replace("("+album.ToLower()+")", "")), video.Duration, video.Thumbnails);
-                    foundVideo2 = new VideoSearchResult(video.Id, dividedTitle.First().ToLower().Replace("(" + album.ToLower() + ")", ""), new Author(video.Author.ChannelId, dividedTitle.Last().ToLower().Replace("(" + album.ToLower() + ")", "")), video.Duration, video.Thumbnails);
-                    
-                }
-                index += 1;
-
-                byte titleRatio = (byte)(Fuzz.Ratio(title.ToLower(), foundVideo.Title.ToLower().Replace("("+album.ToLower()+")", "")));
-                byte artistRatio = (byte)(Fuzz.Ratio(artist.ToLower(), foundVideo.Author.ToString().ToLower()));
-                byte titleRatio2 = (byte)(Fuzz.Ratio(title.ToLower(), foundVideo2.Title.ToLower().Replace("(" + album.ToLower() + ")", "")));
-                byte artistRatio2 = (byte)(Fuzz.Ratio(artist.ToLower(), foundVideo2.Author.ToString().ToLower()));
-
-                if (!Filter.BlacklistedVideo(foundVideo.Title))
-                {
-                    Sys.debug(foundVideo.Title);
-                    if (titleRatio >= 90 && artistRatio >= 30)
-                    {
-                        found = foundVideo;
-                        Sys.debug("Found video url: " + found.Url + " Title: " + found.Title.ToString() + " Author: " + found.Author.ToString() + " with accuracy of " + titleRatio + "%");
-                        break;
-                    } else if (titleRatio2 >= 90 && artistRatio2 >= 30)
-                    {
-                        found = foundVideo2;
-                        Sys.debug("Found video url: " + found.Url + " Title: " + found.Title.ToString() + " Author: " + found.Author.ToString() + " with accuracy of " + titleRatio2 + "%");
-                        break;
-                    }
-                    else if (bestRatio < titleRatio && artistRatio >= 30)
-                    {
-                        found = foundVideo;
-                        bestRatio = titleRatio;
-                    } else if (bestRatio < titleRatio2 && artistRatio2 >= 30)
-                    {
-                        found = foundVideo;
-                        bestRatio = titleRatio2;
-                    }
-                    if (index > 15)
-                    {
-                        if (found == null)
-                        {
-                            MessageBox.Show("Error no sound found in search results on yt");
-                            break;
-                        }
-                        Sys.debug("Found video url:" + found.Url + " Title: " + found.Title.ToString() + " Author: " + found.Author.ToString() + " with accuracy of " + bestRatio + "%");
-                        break;
-                    }
-                } else {  }
-            }
-            if (found != null)
+            using (var process = new System.Diagnostics.Process { StartInfo = processStartInfo })
             {
-                return await youtube.Videos.GetAsync(found.Url);
-            } else
-            {
-                MessageBox.Show("ERROR: AUDIO NOT FOUND ON YT");
-                return new YoutubeExplode.Videos.Video(new VideoId("21"), "", new Author(new YoutubeExplode.Channels.ChannelId(), ""), new DateTimeOffset((long)1, new TimeSpan((long)3)), "", new TimeSpan(), (IReadOnlyList<Thumbnail>)(new List<Thumbnail>()), (IReadOnlyList<string>)(new List<string>()), new Engagement(67, 2, 2));
+                //process.Start();
+                //await process.WaitForExitAsync();
+
+                //var errorTask = process.StandardError.ReadToEndAsync();
+                //MessageBox.Show(errorTask.Result);
+                //var outputTask = process.StandardOutput.ReadToEndAsync();
+                process.Start();
+                await process.WaitForExitAsync();
+
+
+                var error = await process.StandardError.ReadToEndAsync();
+                var output = await process.StandardOutput.ReadToEndAsync();
+
+                Sys.debug("Current output errors, these may be normal...\n" + error);
+                Sys.debug("Output from console: \n" + output);
+
+
+                MessageBox.Show(output);
+                MessageBox.Show(error);
+                return new VideoInfo();
             }
         }
-        
+
         public class VideoInfo
         {
             public VideoInfo()
@@ -204,12 +177,14 @@ namespace TrackTrek.Miscs
                 this.Artist = string.Empty;
                 this.Lyrics = string.Empty;
                 this.AlbumImageUrl = string.Empty;
+                this.YoutubeImageUrl = string.Empty;
                 this.AlbumImage = new byte[0];
                 this.Path = string.Empty;
             }
             public string Title { get; set; }
 
             public string AlbumImageUrl { get; set; }
+            public string YoutubeImageUrl { get; set; }
             public string Lyrics { get; set; }
 
             public string Path { get; set; }

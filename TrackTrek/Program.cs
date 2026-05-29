@@ -6,8 +6,6 @@ using System.Windows.Forms;
 using TrackTrek.Audio;
 using TrackTrek.Miscs;
 using TrackTrek.UI;
-using YoutubeExplode;
-using YoutubeExplode.Common;
 
 namespace TrackTrek
 {
@@ -23,6 +21,7 @@ namespace TrackTrek
         [STAThread]
         static void Main()
         {
+            MessageBox.Show("This is a alpha release, be aware that there are NO working downloading bars.\nMost of the feature are not here, only downloading using a youtube link will work. Please download the latest release instead.");
             Sys.initialize();
             string path1 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TrackTrek");
             string path = Path.Combine(path1, "Settings.json");
@@ -44,7 +43,7 @@ namespace TrackTrek
             }
             catch (Exception e)
             {
-                File.WriteAllText(path, $"{{\"debug\": true, \"maxResults\": \"10\", \"customPath\": \"{(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads\\")).Replace("\\", "\\\\")}\"}}");
+                File.WriteAllText(path, $"{{\"debug\": false, \"maxResults\": \"10\", \"customPath\": \"{(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads\\")).Replace("\\", "\\\\")}\"}}");
                 jsonNode = JsonNode.Parse(File.ReadAllText(path));
                 Program.debug = jsonNode["debug"].GetValue<bool>();
                 Sys.debug("Missing/Malformatted value in Settings.json, resetting to default values. Advanced: " + e.Message.ToString());
@@ -67,6 +66,7 @@ namespace TrackTrek
                 MessageBox.Show("An unexpected error occurred: " + e.ToString());
             }
             ;
+            // update yt-dlp when launching
 
 
 
@@ -81,7 +81,7 @@ namespace TrackTrek
             Controls.Add(resultsList);
             Controls.Add(downloadQueue);
             Controls.Add(downloadProgress);
-
+            /*
             //searchButton.Click += SearchButton_Click;
             //settingsButton.Click += SettingsButton_Click;
             resultsList.DoubleClick += (sender, e) => Task.Run(async () =>
@@ -113,7 +113,7 @@ namespace TrackTrek
                     }));
                 }
 
-                YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo(title, artist, album);
+                YoutubeExplode.Videos.Video videoInfo = await Searching.GetVideo2(title, artist, album);
 
                 Sys.debug("Starting download...");
 
@@ -154,8 +154,9 @@ namespace TrackTrek
                 {
                     Form1.downloadProgress.Value = 100;
                 }));
-            });
+            });*/
         }
+
     }
 
 } // add real queue

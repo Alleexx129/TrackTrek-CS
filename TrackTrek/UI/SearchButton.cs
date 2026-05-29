@@ -22,13 +22,6 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using TrackTrek.Audio;
 using TrackTrek.Miscs;
-using YoutubeExplode;
-using YoutubeExplode.Common;
-using YoutubeExplode.Exceptions;
-using YoutubeExplode.Search;
-using YoutubeExplode.Videos;
-using YoutubeExplode.Videos.Streams;
-using static MediaToolkit.Model.Metadata;
 using static System.Net.Mime.MediaTypeNames;
 using static TrackTrek.Miscs.Searching;
 
@@ -82,6 +75,24 @@ namespace TrackTrek.UI
                 }
                 else
 >>>>>>> b9fa676d63c9bdb7c2413ca6f305a4957e916700
+                {
+                    output = await Download.EnqueueDownload(videoInfoFromITune.Artist, videoInfoFromITune.Title, query, newItem);
+                }
+
+                try
+                {
+                    geniusLink = Lyrics.ToGeniusLink(videoInfoFromITune.Title.ToString(), videoInfoFromITune.Artist.ToString());
+
+                    lyrics = await Lyrics.GetLyrics(geniusLink);
+                }
+                catch (Exception)
+                {
+                    lyrics = "";
+                }
+                if (lyrics == "")
+                {
+                    output = await Download.EnqueueDownload(Filter.FilterArtistName(videoInfo.Author.ToString()), Filter.FilterTitle(videoInfo.Title.ToString()), query, newItem);
+                } else
                 {
                     output = await Download.EnqueueDownload(videoInfoFromITune.Artist, videoInfoFromITune.Title, query, newItem);
                 }
@@ -444,14 +455,17 @@ namespace TrackTrek.UI
                     
                     break;
                 case "playlist":
+                    MessageBox.Show("Unsupported, please download the latest release instead of the current alpha");
                     // same as link but foreach, not same for spotify
                     break;
                 case "keyword":
+                    MessageBox.Show("Unsupported, please download the latest release instead of the current alpha");
                     // first search itune, get info, get lyrics and all, then at the end search audio
-
+                    await Searching.GetVideo("test", "test", "test");
                     // also need to update the double click in button list
                     break;
                 case "spotify":
+                    MessageBox.Show("Unsupported, this feature will only be available in the future");
                     // temporary
                     // use https://open.spotify.com/oembed?url=playlisturlhere
                     break;

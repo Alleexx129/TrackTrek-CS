@@ -1,4 +1,5 @@
-﻿using TrackTrek.Miscs;
+﻿using System.Net;
+using TrackTrek.Miscs;
 
 namespace TrackTrek.Audio
 {
@@ -8,6 +9,11 @@ namespace TrackTrek.Audio
         {
             TagLib.File file = TagLib.File.Create(videoInfo.Path);
             byte[] imageBytes = await DownloadThumbnailAsBytes(videoInfo.AlbumImageUrl);
+
+            if (imageBytes is [4,0,4])
+            {
+                imageBytes = await DownloadThumbnailAsBytes(videoInfo.YoutubeImageUrl);
+            }
 
 
             var picture = new TagLib.Picture
@@ -59,9 +65,16 @@ namespace TrackTrek.Audio
                                 error = false;
                                 break;
                             }
-                            catch (Exception e)
+                            catch (HttpRequestException e)
                             {
                                 Sys.debug($"Unexpected error occured: {e}");
+
+                                if (e.StatusCode == HttpStatusCode.NotFound) // artists not being able to name their album properly...
+                                {
+                                    Sys.debug("Not retrying since its 404");
+
+                                    return (byte[])([4,0,4]); // return "1" if error instead in the future
+                                }
                                 Sys.debug($"Retrying... {i}");
                                 error = true;
                                 await Task.Delay(2000);

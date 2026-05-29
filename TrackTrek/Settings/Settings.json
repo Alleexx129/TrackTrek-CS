@@ -1,5 +1,5 @@
 {
-    "debug": true,
+    "debug": false,
   "maxResults": "10",
     "customPath": null
 }
