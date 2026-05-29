@@ -16,7 +16,10 @@ namespace TrackTrek.Miscs
 
             foreach (string word in lower.Split(' '))
             {
-                final.Add(word[0].ToString().ToUpper() + word.Remove(0, 1));
+                if (word != "")
+                {
+                    final.Add(word[0].ToString().ToUpper() + word.Remove(0, 1));
+                }
             }
 
             return string.Join(" ", final);
