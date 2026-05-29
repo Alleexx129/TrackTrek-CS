@@ -6,6 +6,7 @@
 
 ### Download options
 [**[Download Latest Stable Beta]**](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v1.2.5-beta1)
+
 [**[Download Latest Alpha]**](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v2.0.0-alpha1) - this is a pre-release
 
 ### Install dependencies
