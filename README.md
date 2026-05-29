@@ -1,6 +1,4 @@
-# This is an unstable fix, I'm currently rewriting most of the existing code, please be patient.
-
-# This program is still in beta. Please report any bugs [here](https://github.com/Alleexx129/TrackTrek-CS/issues). Download the [latest beta](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v1.2.5-beta1) or the [latest alpha](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v2.0.0-alpha1)
+# This program is still in beta and is being rewritten at the moment. Please report any bugs [here](https://github.com/Alleexx129/TrackTrek-CS/issues). Download the [latest beta](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v1.2.5-beta1) or the [latest alpha](https://github.com/Alleexx129/TrackTrek-CS/releases/tag/v2.0.0-alpha1)
 
 ![TrackTrek logo](https://raw.githubusercontent.com/Alleexx129/Nyanko/refs/heads/main/logo.png "TrackTrek")
 
