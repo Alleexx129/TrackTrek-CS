@@ -1,0 +1,142 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Styles.Resources>
+    <SolidColorBrush x:Key="WindowBgBrush" Color="#191919"/>
+    <SolidColorBrush x:Key="PanelBrush" Color="#232323"/>
+    <SolidColorBrush x:Key="PanelBrushAlt" Color="#2A2A2A"/>
+    <SolidColorBrush x:Key="PanelBorderBrush" Color="#4C4C4C"/>
+    <SolidColorBrush x:Key="HeaderBrush" Color="#353535"/>
+    <SolidColorBrush x:Key="TextBrush" Color="#F2F2F2"/>
+    <SolidColorBrush x:Key="MutedTextBrush" Color="#B7B7B7"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="#D8842B"/>
+    <SolidColorBrush x:Key="AccentBrushDark" Color="#B96A1A"/>
+    <SolidColorBrush x:Key="AccentBrushLight" Color="#F0A64D"/>
+    <SolidColorBrush x:Key="SuccessBrush" Color="#5FBF72"/>
+    <SolidColorBrush x:Key="DangerBrush" Color="#C85B5B"/>
+  </Styles.Resources>
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{DynamicResource WindowBgBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+  </Style>
+
+  <Style Selector="TextBlock.muted">
+    <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+  </Style>
+
+  <Style Selector="TextBox.searchBox">
+    <Setter Property="Background" Value="#141414" />
+    <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    <Setter Property="Padding" Value="12,10" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="FontSize" Value="15" />
+  </Style>
+
+  <Style Selector="TextBox.folderBox">
+    <Setter Property="Background" Value="#171717" />
+    <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="CornerRadius" Value="4" />
+  </Style>
+
+  <Style Selector="NumericUpDown.retro">
+    <Setter Property="Background" Value="#171717" />
+    <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="6" />
+    <Setter Property="Width" Value="120" />
+  </Style>
+
+  <Style Selector="Button.retro">
+    <Setter Property="Foreground" Value="#FFFFFF" />
+    <Setter Property="BorderBrush" Value="#7A4310" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="14,10" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="MinHeight" Value="38" />
+    <Setter Property="Background">
+      <Setter.Value>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+          <GradientStop Color="#F0A64D" Offset="0" />
+          <GradientStop Color="#B96A1A" Offset="1" />
+        </LinearGradientBrush>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style Selector="Button.retro:pointerover">
+    <Setter Property="Background">
+      <Setter.Value>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+          <GradientStop Color="#F8B562" Offset="0" />
+          <GradientStop Color="#C67821" Offset="1" />
+        </LinearGradientBrush>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style Selector="Button.ghost">
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="14,10" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="MinHeight" Value="38" />
+    <Setter Property="Background" Value="#2B2B2B" />
+  </Style>
+
+  <Style Selector="Button.ghost:pointerover">
+    <Setter Property="Background" Value="#343434" />
+  </Style>
+
+  <Style Selector="Border.section">
+    <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="5" />
+    <Setter Property="Padding" Value="10" />
+  </Style>
+
+  <Style Selector="Border.headerStrip">
+    <Setter Property="Background" Value="{DynamicResource HeaderBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="8,6" />
+  </Style>
+
+  <Style Selector="Border.listItem">
+    <Setter Property="Background" Value="{DynamicResource PanelBrushAlt}" />
+    <Setter Property="BorderBrush" Value="#3F3F3F" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="8" />
+  </Style>
+
+  <Style Selector="Border.thumbShell">
+    <Setter Property="Background" Value="#151515" />
+    <Setter Property="BorderBrush" Value="#4A4A4A" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="4" />
+  </Style>
+
+  <Style Selector="ProgressBar.retro">
+    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+    <Setter Property="Background" Value="#121212" />
+    <Setter Property="Height" Value="18" />
+    <Setter Property="MinWidth" Value="240" />
+  </Style>
+
+  <Style Selector="ListBox.clean">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+</Styles>

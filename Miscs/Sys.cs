@@ -1,0 +1,69 @@
+﻿using Microsoft.VisualBasic;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+using TrackTrek.Avalonia.Miscs;
+using TrackTrek.Avalonia.Views;
+
+namespace TrackTrek.Miscs
+{
+    internal class Sys
+    {
+        public static void debug<T>(T msg) {
+            
+            if (AppSettings.Debug == true)
+            {
+                string debugMessage = "";
+                string mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TrackTrek");
+
+                if (!Directory.Exists(mainPath))
+                {
+                    Directory.CreateDirectory(mainPath);
+                }
+
+                Console.WriteLine(msg);
+                string exist = "";
+
+                if (msg is byte[] byteArray)
+                {
+                    debugMessage = Encoding.UTF8.GetString(byteArray);
+                }
+                else
+                {
+                    debugMessage = Convert.ToString(msg);
+                }
+
+                try
+                {
+                    exist += $"{File.ReadAllText(Path.Combine(mainPath, DateTime.Today.ToString("yyyy-MM-dd") + "_debug.txt"))}\n";
+                } catch
+                {
+                }
+                exist += $"[{DateTime.Now.Hour.ToString("D2")}:{DateTime.Now.Minute.ToString("D2")}:{DateTime.Now.Second.ToString("D2")}] {debugMessage}";
+                File.WriteAllText(Path.Combine(mainPath, DateTime.Today.ToString("yyyy-MM-dd") + "_debug.txt"), exist);
+            }
+        }
+
+        public static void initialize()
+        {
+            string mainPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TrackTrek");
+            string settingsPath = Path.Combine(mainPath, "Settings.json");
+
+            if (!Directory.Exists(mainPath))
+            {
+                Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TrackTrek"));
+            }
+
+            if (!File.Exists(settingsPath))
+            {
+                File.WriteAllText(Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TrackTrek"), "Settings.json"),  "{\"debug\": true, \"maxResults\": \"10\"}");
+            }
+        }
+    }
+}
+

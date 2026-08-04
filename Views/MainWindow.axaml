@@ -1,0 +1,186 @@
+<Window
+    x:Class="TrackTrek.Avalonia.Views.MainWindow"
+    x:Name="RootWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:TrackTrek.Avalonia.ViewModels"
+    mc:Ignorable="d"
+    Width="1320"
+    Height="860"
+    MinWidth="1100"
+    MinHeight="720"
+	Icon="/logo.ico"
+    Title="TrackTrek - YouTube Music Downloader">
+
+	<Design.DataContext>
+		<vm:MainWindowViewModel />
+	</Design.DataContext>
+
+	<Grid Margin="14" RowDefinitions="Auto,Auto,*,240,Auto">
+
+		<!-- Top title strip -->
+		<Border Grid.Row="0" Classes="section" Padding="14" Margin="0,0,0,12">
+			<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+				<Border Width="48" Height="48" Background="{DynamicResource AccentBrush}" CornerRadius="6">
+					<TextBlock Text="♫"
+							   HorizontalAlignment="Center"
+							   VerticalAlignment="Center"
+							   FontSize="24"
+							   FontWeight="Bold"
+							   Foreground="White"/>
+				</Border>
+
+				<StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+					<TextBlock Text="TrackTrek"
+							   FontSize="24"
+							   FontWeight="Bold"/>
+					<TextBlock Text="Retro-style desktop UI • Avalonia edition"
+							   Classes="muted"
+							   FontSize="13"/>
+				</StackPanel>
+
+				<StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" Spacing="3">
+					<TextBlock Text="{Binding DownloadFolder}" HorizontalAlignment="Right" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" MaxWidth="320"/>
+					<TextBlock Text="{Binding GlobalStatus}" HorizontalAlignment="Right" FontSize="13"/>
+				</StackPanel>
+			</Grid>
+		</Border>
+
+		<!-- Search strip -->
+		<Border Grid.Row="1" Classes="section" Margin="0,0,0,12">
+			<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+				<TextBox Classes="searchBox"
+						 Text="{Binding SearchText}"
+						 PlaceholderText="Search songs, albums, artists, playlists..." />
+
+				<Button Grid.Column="1"
+						Classes="retro"
+						Content="🔎  Search"
+						Command="{Binding SearchCommand}" />
+
+				<Button Grid.Column="2"
+						Classes="ghost"
+						Content="⚙  Settings"
+						Click="OpenSettings_Click" />
+			</Grid>
+		</Border>
+
+		<!-- Search results -->
+		<Border Grid.Row="2" Classes="section" Margin="0,0,0,12">
+			<Grid RowDefinitions="Auto,*">
+				<Border Grid.Row="0" Classes="headerStrip" Margin="0,0,0,8">
+					<Grid ColumnDefinitions="84,*,220,110">
+						<TextBlock Text="Thumbnail" FontWeight="SemiBold"/>
+						<TextBlock Grid.Column="1" Text="Title" FontWeight="SemiBold"/>
+						<TextBlock Grid.Column="2" Text="Artist" FontWeight="SemiBold"/>
+						<TextBlock Grid.Column="3" Text="Action" FontWeight="SemiBold"/>
+					</Grid>
+				</Border>
+
+				<ListBox Grid.Row="1"
+						 Classes="clean"
+						 ItemsSource="{Binding SearchResults}"
+						 SelectedItem="{Binding SelectedResult}">
+					<ListBox.ItemTemplate>
+						<DataTemplate>
+							<Border Classes="listItem" Margin="0,0,0,8">
+								<Grid ColumnDefinitions="84,*,220,110" ColumnSpacing="12">
+									<Border Width="64" Height="64" Classes="thumbShell" VerticalAlignment="Center">
+										<Grid>
+											<TextBlock Text="♪"
+													   FontSize="26"
+													   Foreground="#888888"
+													   HorizontalAlignment="Center"
+													   VerticalAlignment="Center"/>
+											<Image Source="{Binding ThumbnailUrl}"
+												   Stretch="UniformToFill"/>
+										</Grid>
+									</Border>
+
+									<StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+										<TextBlock Text="{Binding Title}"
+												   FontWeight="SemiBold"
+												   FontSize="15"
+												   TextTrimming="CharacterEllipsis"/>
+										<TextBlock Text="Ready to queue"
+												   Classes="muted"
+												   FontSize="12"/>
+									</StackPanel>
+
+									<TextBlock Grid.Column="2"
+											   Text="{Binding Artist}"
+											   VerticalAlignment="Center"
+											   FontSize="14"
+											   TextTrimming="CharacterEllipsis"/>
+
+									<Button Grid.Column="3"
+											Classes="retro"
+											Content="Queue"
+											VerticalAlignment="Center"
+											Command="{Binding DataContext.QueueDownloadCommand, ElementName=MainWindow}"
+											CommandParameter="{Binding}" />
+								</Grid>
+							</Border>
+						</DataTemplate>
+					</ListBox.ItemTemplate>
+				</ListBox>
+			</Grid>
+		</Border>
+
+		<!-- History -->
+		<Border Grid.Row="3" Classes="section" Margin="0,0,0,12">
+			<Grid RowDefinitions="Auto,*">
+				<Border Grid.Row="0" Classes="headerStrip" Margin="0,0,0,8">
+					<Grid ColumnDefinitions="*,180">
+						<TextBlock Text="Download Path" FontWeight="SemiBold"/>
+						<TextBlock Grid.Column="1" Text="Status" FontWeight="SemiBold"/>
+					</Grid>
+				</Border>
+
+				<ListBox Grid.Row="1"
+						 Classes="clean"
+						 ItemsSource="{Binding HistoryItems}"
+						 SelectedItem="{Binding SelectedHistory}">
+					<ListBox.ItemTemplate>
+						<DataTemplate>
+							<Border Classes="listItem" Margin="0,0,0,8">
+								<Grid ColumnDefinitions="*,180" ColumnSpacing="12">
+									<TextBlock Text="{Binding DownloadPath}"
+											   VerticalAlignment="Center"
+											   TextTrimming="CharacterEllipsis"/>
+									<TextBlock Grid.Column="1"
+											   Text="{Binding Status}"
+											   VerticalAlignment="Center"
+											   FontWeight="SemiBold"/>
+								</Grid>
+							</Border>
+						</DataTemplate>
+					</ListBox.ItemTemplate>
+				</ListBox>
+			</Grid>
+		</Border>
+
+		<!-- Progress strip -->
+		<Border Grid.Row="4" Classes="section" Padding="10">
+			<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+				<TextBlock Text="Download Progress"
+						   VerticalAlignment="Center"
+						   FontWeight="SemiBold"/>
+
+				<ProgressBar Grid.Column="1"
+							 Classes="retro"
+							 Minimum="0"
+							 Maximum="100"
+							 Value="{Binding GlobalProgress}" />
+
+				<TextBlock Grid.Column="2"
+						   Text="{Binding GlobalProgress, StringFormat={}{0:0}%}"
+						   VerticalAlignment="Center"
+						   FontWeight="SemiBold"/>
+			</Grid>
+		</Border>
+
+	</Grid>
+</Window>
